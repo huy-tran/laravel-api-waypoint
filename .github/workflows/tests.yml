@@ -96,6 +96,11 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, sqlite3, pdo_sqlite
           coverage: none
 
+      - name: Validate composer.json
+        # Runs before install, so a manifest problem is reported as itself rather
+        # than as a confusing resolution failure.
+        run: composer validate --strict --no-check-lock
+
       - name: Install dependencies
         run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress
 

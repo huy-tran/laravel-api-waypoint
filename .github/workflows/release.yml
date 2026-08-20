@@ -1,0 +1,165 @@
+name: release
+
+# Tagging is done here rather than locally, so a release cannot happen without
+# the full check suite passing first, and so the tag, the CHANGELOG section and
+# the GitHub Release notes can never disagree with each other.
+#
+# Composer packages take their version from the git tag, not from a version field
+# in composer.json: `composer validate --strict` warns when that field is present
+# on a package published to Packagist. So CHANGELOG.md is the source of truth in
+# the repository, and this workflow turns it into the tag.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, without the leading v (e.g. 0.2.0)'
+        required: true
+        type: string
+      dry-run:
+        description: 'Run every check but do not tag or publish'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    name: release ${{ inputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history, so the tag lands on a commit with real ancestry and the
+          # release-notes step can see the whole CHANGELOG.
+          fetch-depth: 0
+
+      - name: Refuse to release from anywhere but the default branch
+        run: |
+          if [ "${{ github.ref_name }}" != "${{ github.event.repository.default_branch }}" ]; then
+            echo "::error::Releases are cut from ${{ github.event.repository.default_branch }}, not ${{ github.ref_name }}."
+            exit 1
+          fi
+
+      - name: Validate the version
+        id: version
+        run: |
+          VERSION="${{ inputs.version }}"
+
+          # Semver, optionally with a prerelease. Rejects a leading v so the tag
+          # name is formed in exactly one place, below.
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::[$VERSION] is not a semver version. Enter 1.2.3, not v1.2.3."
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Refuse to re-release an existing tag
+        run: |
+          if git rev-parse "refs/tags/${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "::error::Tag ${{ steps.version.outputs.tag }} already exists. Bump the version."
+            exit 1
+          fi
+
+      - name: Extract the release notes
+        id: notes
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+
+          if ! grep -Fq "## [$VERSION]" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## [$VERSION]' section. Move the Unreleased entries into one and commit that first."
+            exit 1
+          fi
+
+          # Everything between this version's heading and the next one. Matched
+          # with index() rather than a regex: a version built into a dynamic awk
+          # pattern turns "[0.1.0]" into a character class and silently matches
+          # nothing.
+          awk -v heading="## [$VERSION]" '
+            index($0, heading) == 1 { found = 1; next }
+            found && index($0, "## ") == 1 { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+
+          if [ ! -s release-notes.md ]; then
+            echo "::error::The '## [$VERSION]' section in CHANGELOG.md is empty."
+            exit 1
+          fi
+
+          echo "Release notes:"
+          cat release-notes.md
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, sqlite3, pdo_sqlite
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress
+
+      # Catches the things that only bite once the package is public: a malformed
+      # composer.json, a stray version field, missing metadata.
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Check code style
+        run: vendor/bin/pint --test
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --no-progress --error-format=github
+
+      # Includes the golden-file and contract-conformance tests, so a release
+      # cannot ship a document that no longer matches the published meta-schema.
+      - name: Run tests
+        run: vendor/bin/pest --ci
+
+      - name: Confirm the package installs from a clean tree
+        # `composer install --no-dev` is what a consumer's CI actually runs, and it
+        # is the first place a missing runtime dependency shows up.
+        run: |
+          rm -rf vendor composer.lock
+          composer install --no-dev --prefer-dist --no-interaction --no-progress
+          php -r 'require "vendor/autoload.php"; new ReflectionClass(Hygo\ApiWaypoint\ApiWaypointServiceProvider::class); echo "autoloads without dev dependencies\n";'
+
+      - name: Stop here on a dry run
+        if: ${{ inputs.dry-run }}
+        run: |
+          echo "::notice::Dry run: every check passed. ${{ steps.version.outputs.tag }} was not created."
+          exit 0
+
+      - name: Create and push the tag
+        if: ${{ ! inputs.dry-run }}
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Publish the GitHub Release
+        if: ${{ ! inputs.dry-run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --title "${{ steps.version.outputs.tag }}" \
+            --notes-file release-notes.md \
+            --verify-tag
+
+      - name: Summarise
+        if: ${{ ! inputs.dry-run }}
+        run: |
+          {
+            echo "### Released ${{ steps.version.outputs.tag }}"
+            echo
+            echo "Packagist updates from the tag within a minute or so, provided the"
+            echo "GitHub integration is connected. Check:"
+            echo "<https://packagist.org/packages/hygo/laravel-api-waypoint>"
+          } >> "$GITHUB_STEP_SUMMARY"

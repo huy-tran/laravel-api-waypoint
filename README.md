@@ -291,6 +291,17 @@ composer golden        # regenerate tests/Fixtures/golden.json, then read the di
 
 `workbench/` is a miniature host application with two modules and seven endpoints, covering every branch the pipeline has: a create with a nested collection, an index with a full query contract, a show with a route binding, a refund with an unresolvable field, a multipart upload, an inline-`validate()` action, and an unnamed closure route. The golden-file test asserts the whole compiled document in one assertion, and its fixture is what the Central App is built against.
 
+## Releasing
+
+Never tag locally. Releases are cut by the **Release** workflow, so that a version cannot exist without the full check suite having passed on it.
+
+1. Move the shipping entries from `## [Unreleased]` into a new `## [x.y.z] - YYYY-MM-DD` section in `CHANGELOG.md`, and merge that to `main`.
+2. Actions → **Release** → Run workflow, entering `x.y.z` (no leading `v`). Tick **dry-run** first if you want the checks without the tag.
+
+The workflow refuses to continue unless the version is valid semver, has a matching `CHANGELOG.md` section, and has no existing tag. It then validates the manifest, runs Pint, PHPStan and the test suite, confirms the package autoloads with `--no-dev`, creates the annotated `vx.y.z` tag and opens a GitHub Release using that section as the notes.
+
+`CHANGELOG.md` is the single place a version number lives. It is deliberately **not** in `composer.json`: Composer derives a package's version from its git tags, and `composer validate --strict` warns when a package published to Packagist carries a `version` field. That validation runs in CI, so adding one would fail the build.
+
 ## Licence
 
 MIT.
