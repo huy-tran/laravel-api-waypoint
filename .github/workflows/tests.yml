@@ -1,0 +1,106 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        php: ['8.3', '8.4']
+        laravel: [11, 12, 13]
+        stability: [prefer-stable]
+        include:
+          # The Testbench major is what actually pins the framework major, so it
+          # travels with the Laravel leg rather than being resolved by chance.
+          - laravel: 11
+            testbench: 9
+            pest: 3
+          - laravel: 12
+            testbench: 10
+            pest: 3
+          - laravel: 13
+            testbench: 11
+            pest: 4
+          # One lowest-dependency run, so the declared floors are real rather than
+          # whatever happened to be current when the constraints were written.
+          - os: ubuntu-latest
+            php: '8.3'
+            laravel: 12
+            testbench: 10
+            pest: 3
+            stability: prefer-lowest
+          # Windows is where several contributors work, and it is where the path
+          # and file-locking differences show up.
+          - os: windows-latest
+            php: '8.4'
+            laravel: 13
+            testbench: 11
+            pest: 4
+            stability: prefer-stable
+
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }} / ${{ matrix.stability }} / ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, sqlite3, pdo_sqlite
+          coverage: none
+
+      - name: Resolve dependencies
+        # bash on every runner, including Windows, so the line continuations and
+        # the caret in the version constraints behave the same everywhere.
+        shell: bash
+        run: |
+          composer require --no-update --dev \
+            "orchestra/testbench:^${{ matrix.testbench }}.0" \
+            "pestphp/pest:^${{ matrix.pest }}.0" \
+            "pestphp/pest-plugin-laravel:^${{ matrix.pest }}.0"
+          composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
+
+      - name: Report the resolved versions
+        shell: bash
+        run: composer show laravel/framework orchestra/testbench spatie/laravel-data pestphp/pest
+
+      # Includes the golden-file test, which fails if the committed fixture no
+      # longer matches what the compiler produces, and the contract-conformance
+      # test, which validates the document against resources/schema.
+      - name: Run tests
+        shell: bash
+        run: vendor/bin/pest --ci
+
+  static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    name: static analysis and style
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: dom, curl, libxml, mbstring, zip, sqlite3, pdo_sqlite
+          coverage: none
+
+      - name: Install dependencies
+        run: composer update --prefer-stable --prefer-dist --no-interaction --no-progress
+
+      - name: Check code style
+        run: vendor/bin/pint --test
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --no-progress --error-format=github

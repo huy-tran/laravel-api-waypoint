@@ -1,0 +1,1224 @@
+{
+    "schema_format_version": "1.0",
+    "generated_at": "2026-08-20T02:06:07+00:00",
+    "schema_hash": "sha256:a4046677c2d0",
+    "application": {
+        "key": "acme-orders-api",
+        "name": "Acme Orders API",
+        "environment": "local",
+        "base_url": "http://acme-orders.test",
+        "api_prefix": "/api/v1",
+        "laravel_version": "12.67.0",
+        "package_version": "1.0.0+no-version-set"
+    },
+    "capabilities": {
+        "references": true,
+        "tokens": true,
+        "scenarios": true,
+        "reset": false,
+        "response_snapshots": false
+    },
+    "auth": {
+        "schemes": [
+            {
+                "id": "sanctum_bearer",
+                "type": "http",
+                "scheme": "bearer",
+                "header": "Authorization",
+                "description": "Sanctum personal access token. Mint one via POST /v1/api-waypoint/tokens."
+            }
+        ],
+        "test_roles": [
+            "admin",
+            "customer"
+        ]
+    },
+    "modules": [
+        {
+            "key": "app",
+            "name": "App",
+            "endpoint_count": 1
+        },
+        {
+            "key": "billing",
+            "name": "Billing",
+            "endpoint_count": 1
+        },
+        {
+            "key": "orders",
+            "name": "Orders",
+            "endpoint_count": 4
+        },
+        {
+            "key": "reporting",
+            "name": "Reporting",
+            "endpoint_count": 1
+        }
+    ],
+    "endpoints": [
+        {
+            "id": "app.get.health_ping",
+            "hash": "sha256:f296f553e7f7",
+            "module": "app",
+            "route_name": null,
+            "method": "GET",
+            "uri": "/api/v1/health/ping",
+            "path_parameters": [],
+            "deprecated": false,
+            "action": {
+                "class": null,
+                "type": "closure",
+                "as_controller": false
+            },
+            "middleware": [
+                "api",
+                "auth:sanctum"
+            ],
+            "auth": {
+                "required": true,
+                "scheme": "sanctum_bearer",
+                "guard": "sanctum",
+                "abilities": [],
+                "roles": []
+            },
+            "input": null,
+            "query": null,
+            "response": {
+                "success_status": 200,
+                "shape": "opaque",
+                "available_includes": [],
+                "default_includes": [],
+                "errors": [
+                    {
+                        "status": 401,
+                        "schema": {
+                            "$ref": "#/components/responses/Unauthenticated"
+                        }
+                    },
+                    {
+                        "status": 403,
+                        "schema": {
+                            "$ref": "#/components/responses/Forbidden"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "orders.attachments.store",
+            "hash": "sha256:519f1013dedf",
+            "module": "orders",
+            "route_name": "api.v1.orders.attachments.store",
+            "method": "POST",
+            "uri": "/api/v1/orders/{order}/attachments",
+            "path_parameters": [
+                {
+                    "name": "order",
+                    "required": true,
+                    "binding": {
+                        "model": "Modules\\Orders\\Models\\Order",
+                        "key": "uuid"
+                    },
+                    "schema": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "x-faker": {
+                        "strategy": "reference",
+                        "reference": {
+                            "table": "orders",
+                            "column": "uuid"
+                        }
+                    }
+                }
+            ],
+            "summary": "Attach a document to an order.",
+            "deprecated": false,
+            "action": {
+                "class": "Modules\\Orders\\Actions\\AttachDocument",
+                "type": "laravel-actions",
+                "as_controller": true
+            },
+            "middleware": [
+                "api",
+                "auth:sanctum"
+            ],
+            "auth": {
+                "required": true,
+                "scheme": "sanctum_bearer",
+                "guard": "sanctum",
+                "abilities": [],
+                "roles": []
+            },
+            "input": null,
+            "query": null,
+            "response": {
+                "success_status": 201,
+                "shape": "opaque",
+                "available_includes": [],
+                "default_includes": [],
+                "errors": [
+                    {
+                        "status": 401,
+                        "schema": {
+                            "$ref": "#/components/responses/Unauthenticated"
+                        }
+                    },
+                    {
+                        "status": 403,
+                        "schema": {
+                            "$ref": "#/components/responses/Forbidden"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "orders.index",
+            "hash": "sha256:fe8fe4fede16",
+            "module": "orders",
+            "route_name": "api.v1.orders.index",
+            "method": "GET",
+            "uri": "/api/v1/orders",
+            "path_parameters": [],
+            "summary": "List orders.",
+            "deprecated": false,
+            "action": {
+                "class": "Modules\\Orders\\Actions\\ListOrders",
+                "type": "laravel-actions",
+                "as_controller": true
+            },
+            "middleware": [
+                "api",
+                "auth:sanctum"
+            ],
+            "auth": {
+                "required": true,
+                "scheme": "sanctum_bearer",
+                "guard": "sanctum",
+                "abilities": [],
+                "roles": []
+            },
+            "input": null,
+            "query": {
+                "source": "spatie/laravel-query-builder",
+                "x-laravel": {
+                    "query_source": "contract"
+                },
+                "filters": [
+                    {
+                        "name": "status",
+                        "query_key": "filter[status]",
+                        "type": "exact",
+                        "multiple": true,
+                        "allowed_values": [
+                            "draft",
+                            "awaiting_payment",
+                            "paid",
+                            "cancelled"
+                        ],
+                        "x-laravel": {
+                            "enum_class": "Modules\\Orders\\Enums\\OrderStatus"
+                        },
+                        "x-faker": {
+                            "strategy": "enum"
+                        }
+                    },
+                    {
+                        "name": "reference",
+                        "query_key": "filter[reference]",
+                        "type": "partial",
+                        "multiple": false,
+                        "x-faker": {
+                            "strategy": "alphanumeric",
+                            "length": 10
+                        }
+                    },
+                    {
+                        "name": "customer.name",
+                        "query_key": "filter[customer.name]",
+                        "type": "partial",
+                        "multiple": false,
+                        "relation": "customer",
+                        "x-faker": {
+                            "strategy": "person.lastName"
+                        }
+                    },
+                    {
+                        "name": "placed_between",
+                        "query_key": "filter[placed_between]",
+                        "type": "custom",
+                        "multiple": false,
+                        "class": "Modules\\Orders\\Filters\\PlacedBetweenFilter",
+                        "value_hint": "date_range_csv",
+                        "x-faker": {
+                            "strategy": "date_range",
+                            "format": "Y-m-d",
+                            "separator": ","
+                        }
+                    }
+                ],
+                "sorts": [
+                    {
+                        "name": "placed_at",
+                        "query_key": "sort",
+                        "default": true,
+                        "default_direction": "desc"
+                    },
+                    {
+                        "name": "total_cents",
+                        "query_key": "sort",
+                        "default": false
+                    },
+                    {
+                        "name": "reference",
+                        "query_key": "sort",
+                        "default": false
+                    }
+                ],
+                "includes": [
+                    {
+                        "name": "customer",
+                        "type": "relationship",
+                        "count_variant": false
+                    },
+                    {
+                        "name": "lines",
+                        "type": "relationship",
+                        "count_variant": false
+                    },
+                    {
+                        "name": "lines.product",
+                        "type": "relationship",
+                        "count_variant": false
+                    },
+                    {
+                        "name": "payments",
+                        "type": "relationship",
+                        "count_variant": true
+                    }
+                ],
+                "fields": {
+                    "orders": [
+                        "id",
+                        "reference",
+                        "status",
+                        "total_cents"
+                    ],
+                    "customers": [
+                        "id",
+                        "name"
+                    ]
+                },
+                "pagination": {
+                    "style": "page",
+                    "query_keys": {
+                        "page": "page",
+                        "per_page": "per_page"
+                    },
+                    "per_page_default": 15,
+                    "per_page_max": 100
+                }
+            },
+            "response": {
+                "success_status": 200,
+                "transformer": "Modules\\Orders\\Transformers\\OrderTransformer",
+                "shape": "collection",
+                "available_includes": [
+                    "customer",
+                    "lines",
+                    "payments",
+                    "lines.product"
+                ],
+                "default_includes": [
+                    "customer"
+                ],
+                "errors": [
+                    {
+                        "status": 400,
+                        "schema": {
+                            "$ref": "#/components/responses/QueryBuilderError"
+                        }
+                    },
+                    {
+                        "status": 401,
+                        "schema": {
+                            "$ref": "#/components/responses/Unauthenticated"
+                        }
+                    },
+                    {
+                        "status": 403,
+                        "schema": {
+                            "$ref": "#/components/responses/Forbidden"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "orders.refund",
+            "hash": "sha256:d2d155d4f965",
+            "module": "billing",
+            "route_name": "api.v1.orders.refund",
+            "method": "POST",
+            "uri": "/api/v1/orders/{order}/refund",
+            "path_parameters": [
+                {
+                    "name": "order",
+                    "required": true,
+                    "binding": {
+                        "model": "Modules\\Orders\\Models\\Order",
+                        "key": "uuid"
+                    },
+                    "schema": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "x-faker": {
+                        "strategy": "reference",
+                        "reference": {
+                            "table": "orders",
+                            "column": "uuid"
+                        }
+                    }
+                }
+            ],
+            "summary": "Refund a paid order.",
+            "deprecated": false,
+            "action": {
+                "class": "Modules\\Billing\\Actions\\RefundOrder",
+                "type": "laravel-actions",
+                "as_controller": true
+            },
+            "middleware": [
+                "api",
+                "auth:sanctum",
+                "can:refund,order"
+            ],
+            "auth": {
+                "required": true,
+                "scheme": "sanctum_bearer",
+                "guard": "sanctum",
+                "abilities": [
+                    "refund"
+                ],
+                "roles": []
+            },
+            "input": {
+                "location": "body",
+                "content_type": "application/json",
+                "data_class": "Modules\\Billing\\Data\\RefundOrderData",
+                "schema": {
+                    "$ref": "#/components/data_objects/Billing.RefundOrderData"
+                }
+            },
+            "query": null,
+            "response": {
+                "success_status": 202,
+                "transformer": "Modules\\Billing\\Transformers\\RefundTransformer",
+                "shape": "opaque",
+                "available_includes": [
+                    "order"
+                ],
+                "default_includes": [],
+                "errors": [
+                    {
+                        "status": 401,
+                        "schema": {
+                            "$ref": "#/components/responses/Unauthenticated"
+                        }
+                    },
+                    {
+                        "status": 403,
+                        "schema": {
+                            "$ref": "#/components/responses/Forbidden"
+                        }
+                    },
+                    {
+                        "status": 409,
+                        "schema": {
+                            "$ref": "#/components/responses/DomainConflict"
+                        }
+                    },
+                    {
+                        "status": 422,
+                        "schema": {
+                            "$ref": "#/components/responses/ValidationError"
+                        }
+                    }
+                ]
+            },
+            "preconditions": [
+                {
+                    "description": "Order must be in the paid state",
+                    "scenario": "paid_order"
+                }
+            ]
+        },
+        {
+            "id": "orders.show",
+            "hash": "sha256:6d7e2a9414da",
+            "module": "orders",
+            "route_name": "api.v1.orders.show",
+            "method": "GET",
+            "uri": "/api/v1/orders/{order}",
+            "path_parameters": [
+                {
+                    "name": "order",
+                    "required": true,
+                    "binding": {
+                        "model": "Modules\\Orders\\Models\\Order",
+                        "key": "uuid"
+                    },
+                    "schema": {
+                        "type": "string",
+                        "format": "uuid"
+                    },
+                    "x-faker": {
+                        "strategy": "reference",
+                        "reference": {
+                            "table": "orders",
+                            "column": "uuid"
+                        }
+                    }
+                }
+            ],
+            "summary": "Show a single order.",
+            "deprecated": false,
+            "action": {
+                "class": "Modules\\Orders\\Actions\\ShowOrder",
+                "type": "laravel-actions",
+                "as_controller": true
+            },
+            "middleware": [
+                "api",
+                "auth:sanctum"
+            ],
+            "auth": {
+                "required": true,
+                "scheme": "sanctum_bearer",
+                "guard": "sanctum",
+                "abilities": [],
+                "roles": []
+            },
+            "input": null,
+            "query": null,
+            "response": {
+                "success_status": 200,
+                "transformer": "Modules\\Orders\\Transformers\\OrderTransformer",
+                "shape": "opaque",
+                "available_includes": [
+                    "customer",
+                    "lines",
+                    "payments",
+                    "lines.product"
+                ],
+                "default_includes": [
+                    "customer"
+                ],
+                "errors": [
+                    {
+                        "status": 401,
+                        "schema": {
+                            "$ref": "#/components/responses/Unauthenticated"
+                        }
+                    },
+                    {
+                        "status": 403,
+                        "schema": {
+                            "$ref": "#/components/responses/Forbidden"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "orders.store",
+            "hash": "sha256:bccef71230e0",
+            "module": "orders",
+            "route_name": "api.v1.orders.store",
+            "method": "POST",
+            "uri": "/api/v1/orders",
+            "path_parameters": [],
+            "summary": "Create an order.",
+            "deprecated": false,
+            "action": {
+                "class": "Modules\\Orders\\Actions\\CreateOrder",
+                "type": "laravel-actions",
+                "as_controller": true
+            },
+            "middleware": [
+                "api",
+                "auth:sanctum"
+            ],
+            "auth": {
+                "required": true,
+                "scheme": "sanctum_bearer",
+                "guard": "sanctum",
+                "abilities": [],
+                "roles": []
+            },
+            "input": {
+                "location": "body",
+                "content_type": "application/json",
+                "data_class": "Modules\\Orders\\Data\\CreateOrderData",
+                "schema": {
+                    "$ref": "#/components/data_objects/Orders.CreateOrderData"
+                }
+            },
+            "query": null,
+            "response": {
+                "success_status": 201,
+                "transformer": "Modules\\Orders\\Transformers\\OrderTransformer",
+                "shape": "opaque",
+                "available_includes": [
+                    "customer",
+                    "lines",
+                    "payments",
+                    "lines.product"
+                ],
+                "default_includes": [
+                    "customer"
+                ],
+                "errors": [
+                    {
+                        "status": 401,
+                        "schema": {
+                            "$ref": "#/components/responses/Unauthenticated"
+                        }
+                    },
+                    {
+                        "status": 403,
+                        "schema": {
+                            "$ref": "#/components/responses/Forbidden"
+                        }
+                    },
+                    {
+                        "status": 422,
+                        "schema": {
+                            "$ref": "#/components/responses/ValidationError"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "id": "reports.export",
+            "hash": "sha256:87b71fbc74c3",
+            "module": "reporting",
+            "route_name": "api.v1.reports.export",
+            "method": "POST",
+            "uri": "/api/v1/reports/export",
+            "path_parameters": [],
+            "summary": "Export a report.",
+            "deprecated": false,
+            "action": {
+                "class": "Modules\\Reporting\\Actions\\ExportReport",
+                "type": "laravel-actions",
+                "as_controller": true
+            },
+            "middleware": [
+                "api",
+                "auth:sanctum"
+            ],
+            "auth": {
+                "required": true,
+                "scheme": "sanctum_bearer",
+                "guard": "sanctum",
+                "abilities": [],
+                "roles": []
+            },
+            "input": null,
+            "query": null,
+            "response": {
+                "success_status": 200,
+                "shape": "opaque",
+                "available_includes": [],
+                "default_includes": [],
+                "errors": [
+                    {
+                        "status": 401,
+                        "schema": {
+                            "$ref": "#/components/responses/Unauthenticated"
+                        }
+                    },
+                    {
+                        "status": 403,
+                        "schema": {
+                            "$ref": "#/components/responses/Forbidden"
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "components": {
+        "data_objects": {
+            "Billing.RefundOrderData": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "title": "RefundOrderData",
+                "x-laravel": {
+                    "class": "Modules\\Billing\\Data\\RefundOrderData",
+                    "hash": "sha256:8ef97c58ff69"
+                },
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "amount_cents",
+                    "reason"
+                ],
+                "properties": {
+                    "amount_cents": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "x-laravel": {
+                            "property": "amountCents",
+                            "input_name": "amount_cents",
+                            "rules": [
+                                "required",
+                                "integer",
+                                "min:1",
+                                "lte:order_total_cents"
+                            ],
+                            "conditional_rules": [
+                                {
+                                    "rule": "lte",
+                                    "field": "order_total_cents",
+                                    "resolvable": false,
+                                    "note": "Bound by [order_total_cents], which is not a sibling property. The Central App cannot infer a safe value from the payload alone."
+                                }
+                            ]
+                        },
+                        "x-faker": {
+                            "strategy": "unresolvable",
+                            "reason": "Constrained by [order_total_cents], which is not part of this payload. Pin a value, or resolve one via GET /references.",
+                            "min": 1
+                        }
+                    },
+                    "reason": {
+                        "type": "string",
+                        "enum": [
+                            "duplicate",
+                            "fraudulent",
+                            "requested_by_customer",
+                            "goods_returned"
+                        ],
+                        "x-laravel": {
+                            "property": "reason",
+                            "rules": [
+                                "required",
+                                "enum"
+                            ],
+                            "enum_class": "Modules\\Billing\\Enums\\RefundReason"
+                        },
+                        "x-faker": {
+                            "strategy": "enum"
+                        }
+                    },
+                    "notify_customer": {
+                        "type": "boolean",
+                        "default": true,
+                        "x-laravel": {
+                            "property": "notifyCustomer",
+                            "input_name": "notify_customer",
+                            "rules": [
+                                "boolean"
+                            ],
+                            "default": true
+                        },
+                        "x-faker": {
+                            "strategy": "boolean"
+                        }
+                    }
+                }
+            },
+            "Orders.CreateOrderData": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "title": "CreateOrderData",
+                "x-laravel": {
+                    "class": "Modules\\Orders\\Data\\CreateOrderData",
+                    "hash": "sha256:d5f8189e5d55"
+                },
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "channel",
+                    "customer_id",
+                    "lines"
+                ],
+                "properties": {
+                    "customer_id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "x-laravel": {
+                            "property": "customerId",
+                            "input_name": "customer_id",
+                            "rules": [
+                                "exists:customers,uuid",
+                                "required",
+                                "uuid"
+                            ],
+                            "exists": {
+                                "table": "customers",
+                                "column": "uuid"
+                            }
+                        },
+                        "x-faker": {
+                            "strategy": "reference",
+                            "reference": {
+                                "table": "customers",
+                                "column": "uuid"
+                            }
+                        }
+                    },
+                    "channel": {
+                        "type": "string",
+                        "enum": [
+                            "web",
+                            "phone",
+                            "in_store"
+                        ],
+                        "x-laravel": {
+                            "property": "channel",
+                            "rules": [
+                                "required",
+                                "enum"
+                            ],
+                            "enum_class": "Modules\\Orders\\Enums\\OrderChannel"
+                        },
+                        "x-faker": {
+                            "strategy": "enum"
+                        }
+                    },
+                    "lines": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 50,
+                        "items": {
+                            "$ref": "#/components/data_objects/Orders.OrderLineData"
+                        },
+                        "x-laravel": {
+                            "property": "lines",
+                            "rules": [
+                                "required",
+                                "array",
+                                "min:1",
+                                "max:50"
+                            ],
+                            "data_collection_of": "Modules\\Orders\\Data\\OrderLineData"
+                        },
+                        "x-faker": {
+                            "strategy": "collection",
+                            "count": {
+                                "min": 1,
+                                "max": 3
+                            }
+                        }
+                    },
+                    "reference": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "pattern": "^ORD-[0-9]{6}$",
+                        "maxLength": 32,
+                        "x-laravel": {
+                            "property": "reference",
+                            "rules": [
+                                "max:32",
+                                "nullable",
+                                "string",
+                                "regex:/^ORD-[0-9]{6}$/",
+                                "unique:orders,reference"
+                            ],
+                            "nullable": true,
+                            "unique": {
+                                "table": "orders",
+                                "column": "reference"
+                            }
+                        },
+                        "x-faker": {
+                            "strategy": "pattern",
+                            "pattern": "ORD-######",
+                            "max": 32,
+                            "unique": true,
+                            "include_probability": 0.6
+                        }
+                    },
+                    "purchase_order_no": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 40,
+                        "x-laravel": {
+                            "property": "purchaseOrderNo",
+                            "input_name": "purchase_order_no",
+                            "rules": [
+                                "max:40",
+                                "required_if:channel,phone",
+                                "nullable",
+                                "string"
+                            ],
+                            "optional": true,
+                            "nullable": true,
+                            "conditional_rules": [
+                                {
+                                    "rule": "required_if",
+                                    "field": "channel",
+                                    "values": [
+                                        "phone"
+                                    ]
+                                }
+                            ]
+                        },
+                        "x-faker": {
+                            "strategy": "alphanumeric",
+                            "length": 10,
+                            "max": 40,
+                            "include_probability": 0.5,
+                            "required_when": {
+                                "field": "channel",
+                                "in": [
+                                    "phone"
+                                ]
+                            }
+                        }
+                    },
+                    "notes": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 500,
+                        "x-laravel": {
+                            "property": "notes",
+                            "rules": [
+                                "max:500"
+                            ],
+                            "nullable": true
+                        },
+                        "x-faker": {
+                            "strategy": "sentence",
+                            "max": 500,
+                            "include_probability": 0.5
+                        }
+                    },
+                    "ship_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "x-laravel": {
+                            "property": "shipAt",
+                            "input_name": "ship_at",
+                            "rules": [
+                                "nullable",
+                                "date",
+                                "after:today"
+                            ],
+                            "nullable": true,
+                            "date_bounds": {
+                                "after": "today"
+                            }
+                        },
+                        "x-faker": {
+                            "strategy": "date",
+                            "range": {
+                                "after": "today"
+                            },
+                            "include_probability": 0.5
+                        }
+                    },
+                    "metadata": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "x-laravel": {
+                            "property": "metadata",
+                            "rules": [
+                                "nullable",
+                                "array"
+                            ],
+                            "nullable": true
+                        },
+                        "x-faker": {
+                            "strategy": "key_value_map",
+                            "include_probability": 0.5
+                        }
+                    }
+                }
+            },
+            "Orders.OrderLineData": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "title": "OrderLineData",
+                "x-laravel": {
+                    "class": "Modules\\Orders\\Data\\OrderLineData",
+                    "hash": "sha256:8a7a58fe713d"
+                },
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                    "product_id",
+                    "quantity"
+                ],
+                "properties": {
+                    "product_id": {
+                        "type": "integer",
+                        "x-laravel": {
+                            "property": "productId",
+                            "input_name": "product_id",
+                            "rules": [
+                                "exists:products,id",
+                                "required",
+                                "numeric",
+                                "exists:products,id"
+                            ],
+                            "exists": {
+                                "table": "products",
+                                "column": "id"
+                            }
+                        },
+                        "x-faker": {
+                            "strategy": "reference",
+                            "reference": {
+                                "table": "products",
+                                "column": "id"
+                            }
+                        }
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 999,
+                        "x-laravel": {
+                            "property": "quantity",
+                            "rules": [
+                                "min:1",
+                                "max:999",
+                                "required",
+                                "numeric"
+                            ]
+                        },
+                        "x-faker": {
+                            "strategy": "int",
+                            "min": 1,
+                            "max": 5
+                        }
+                    },
+                    "unit_price_cents": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 0,
+                        "x-laravel": {
+                            "property": "unitPriceCents",
+                            "input_name": "unit_price_cents",
+                            "rules": [
+                                "min:0"
+                            ],
+                            "optional": true,
+                            "nullable": true
+                        },
+                        "x-faker": {
+                            "strategy": "int",
+                            "min": 100,
+                            "max": 500000,
+                            "include_probability": 0.5
+                        }
+                    }
+                }
+            }
+        },
+        "responses": {
+            "ValidationError": {
+                "type": "object",
+                "required": [
+                    "message",
+                    "errors"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "example": {
+                    "message": "The channel field must be one of: web, phone, in_store.",
+                    "errors": {
+                        "channel": [
+                            "The selected channel is invalid."
+                        ],
+                        "lines.0.product_id": [
+                            "The selected product id is invalid."
+                        ]
+                    }
+                }
+            },
+            "Unauthenticated": {
+                "type": "object",
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "message": "Unauthenticated."
+                }
+            },
+            "Forbidden": {
+                "type": "object",
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "message": "This action is unauthorized."
+                }
+            },
+            "NotFound": {
+                "type": "object",
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "message": "Not Found."
+                }
+            },
+            "DomainConflict": {
+                "type": "object",
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    },
+                    "code": {
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "message": "Order is not in a refundable state.",
+                    "code": "order.not_refundable"
+                }
+            },
+            "QueryBuilderError": {
+                "type": "object",
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "message": "Requested filter(s) `customer_email` are not allowed. Allowed filter(s) are `status, reference, customer.name`."
+                }
+            }
+        }
+    },
+    "diagnostics": {
+        "unmapped_routes": [
+            {
+                "endpoint_id": "app.get.health_ping",
+                "method": "GET",
+                "uri": "/api/v1/health/ping",
+                "reason": "closure_action",
+                "detail": "The route action is a closure, so there is nothing to reflect."
+            },
+            {
+                "endpoint_id": "orders.attachments.store",
+                "route_name": "api.v1.orders.attachments.store",
+                "method": "POST",
+                "uri": "/api/v1/orders/{order}/attachments",
+                "action": "Modules\\Orders\\Actions\\AttachDocument",
+                "reason": "multipart",
+                "detail": "[Modules\\Orders\\Data\\AttachmentData] accepts an uploaded file. Multipart bodies are out of scope for waypoint v1."
+            },
+            {
+                "endpoint_id": "reports.export",
+                "route_name": "api.v1.reports.export",
+                "method": "POST",
+                "uri": "/api/v1/reports/export",
+                "action": "Modules\\Reporting\\Actions\\ExportReport",
+                "reason": "no_data_class",
+                "detail": "[Modules\\Reporting\\Actions\\ExportReport] takes no Data parameter and does not implement ProvidesWaypointInput. Inline $request->validate() rules are not introspected."
+            }
+        ],
+        "warnings": [
+            {
+                "code": "multipart_endpoint",
+                "endpoint_id": "orders.attachments.store",
+                "detail": "Endpoint accepts file uploads, which v1 does not describe."
+            },
+            {
+                "code": "opaque_response",
+                "endpoint_id": "orders.refund",
+                "detail": "The Fractal response shape cannot be derived statically. Capture a snapshot to enable response diffing."
+            },
+            {
+                "code": "opaque_response",
+                "endpoint_id": "orders.show",
+                "detail": "The Fractal response shape cannot be derived statically. Capture a snapshot to enable response diffing."
+            },
+            {
+                "code": "opaque_response",
+                "endpoint_id": "orders.store",
+                "detail": "The Fractal response shape cannot be derived statically. Capture a snapshot to enable response diffing."
+            },
+            {
+                "code": "unnamed_route",
+                "endpoint_id": "app.get.health_ping",
+                "detail": "Route has no name, so its id is derived from the URI and will move if the URI is refactored. The Central App keys saved requests on this id. Name the route."
+            },
+            {
+                "code": "unresolvable_field",
+                "component": "Billing.RefundOrderData",
+                "property": "amount_cents",
+                "detail": "Rule [lte:order_total_cents] references [order_total_cents], which is not a sibling property."
+            },
+            {
+                "code": "unsupported_action",
+                "endpoint_id": "app.get.health_ping",
+                "detail": "Route action is a closure and cannot be described."
+            }
+        ],
+        "counts": {
+            "compile_ms": 69,
+            "data_objects": 3,
+            "endpoints_with_snapshots": 0,
+            "routes_mapped": 4,
+            "routes_total": 7,
+            "warnings": 7,
+            "routes_unmapped": 3
+        }
+    }
+}

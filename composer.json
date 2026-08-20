@@ -1,0 +1,85 @@
+{
+    "name": "hygo/laravel-api-waypoint",
+    "description": "Dev-only Laravel package that publishes a machine-readable description of every API endpoint: input schema, query contract, auth requirements and payload-generation hints.",
+    "keywords": ["laravel", "api", "schema", "developer-tools", "spatie-data"],
+    "license": "MIT",
+    "type": "library",
+    "require": {
+        "php": "^8.3",
+        "illuminate/console": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/contracts": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/database": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/http": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/routing": "^11.0 || ^12.0 || ^13.0",
+        "illuminate/support": "^11.0 || ^12.0 || ^13.0",
+        "spatie/laravel-data": "^4.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.18",
+        "laravel/sanctum": "^4.0",
+        "lorisleiva/laravel-actions": "^2.7",
+        "opis/json-schema": "^2.3",
+        "orchestra/testbench": "^9.0 || ^10.0 || ^11.0",
+        "pestphp/pest": "^3.0 || ^4.0",
+        "pestphp/pest-plugin-laravel": "^3.0 || ^4.0",
+        "spatie/laravel-fractal": "^6.0",
+        "spatie/laravel-query-builder": "^6.0 || ^7.0"
+    },
+    "suggest": {
+        "lorisleiva/laravel-actions": "Required to introspect Action classes (^2.7).",
+        "nwidart/laravel-modules": "Enables module attribution for endpoints (^11.0 || ^12.0).",
+        "spatie/laravel-query-builder": "Enables filter/sort/include descriptions (^6.0 || ^7.0).",
+        "spatie/laravel-fractal": "Enables transformer include descriptions (^6.0).",
+        "laravel/sanctum": "Required for the token-minting endpoint (^4.0)."
+    },
+    "autoload": {
+        "psr-4": {
+            "Hygo\\ApiWaypoint\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Hygo\\ApiWaypoint\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/",
+            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
+            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/",
+            "Modules\\": "workbench/modules/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "@clear",
+            "@prepare"
+        ],
+        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "build": "@php vendor/bin/testbench workbench:build --ansi",
+        "test": "@php vendor/bin/pest",
+        "analyse": "@php vendor/bin/phpstan analyse",
+        "format": "@php vendor/bin/pint",
+        "lint": "@php vendor/bin/pint --test",
+        "check": [
+            "@lint",
+            "@analyse",
+            "@test"
+        ],
+        "golden": "@php vendor/bin/testbench waypoint:schema --pretty --output=tests/Fixtures/golden.json"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Hygo\\ApiWaypoint\\ApiWaypointServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

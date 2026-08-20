@@ -1,0 +1,28 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 6
+
+    # Larastan boots a Testbench application per worker, and they race writing
+    # bootstrap/cache/services.php. One worker is fast enough for a package this
+    # size and avoids an intermittent failure that looks like a real error.
+    parallel:
+        maximumNumberOfProcesses: 1
+
+    paths:
+        - src
+        - config
+        - routes
+        - database
+        # Analysed so the traits and contracts the package ships are checked in a
+        # real consumer, not just in isolation.
+        - workbench
+
+    ignoreErrors:
+        # This IS the config directory. Larastan resolves "the config directory"
+        # relative to the Testbench application it boots, so a package's own config
+        # file never matches, and env() is exactly what belongs in it.
+        -
+            identifier: larastan.noEnvCallsOutsideOfConfig
+            path: config/api-waypoint.php

@@ -1,0 +1,585 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://hygo.dev/schema/api-waypoint-1.0.json",
+    "title": "API Waypoint document, format 1.0",
+    "description": "Normative structure of the document published by hygo/laravel-api-waypoint and consumed by the API Explorer Central App. Both codebases test against this file, which is what keeps two independently built implementations honest.",
+    "type": "object",
+    "required": [
+        "schema_format_version",
+        "generated_at",
+        "schema_hash",
+        "application",
+        "capabilities",
+        "auth",
+        "modules",
+        "endpoints",
+        "components",
+        "diagnostics"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "schema_format_version": { "const": "1.0" },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "schema_hash": { "$ref": "#/$defs/hash" },
+        "application": { "$ref": "#/$defs/application" },
+        "capabilities": { "$ref": "#/$defs/capabilities" },
+        "auth": { "$ref": "#/$defs/auth" },
+        "modules": { "type": "array", "items": { "$ref": "#/$defs/module" } },
+        "endpoints": { "type": "array", "items": { "$ref": "#/$defs/endpoint" } },
+        "components": { "$ref": "#/$defs/components" },
+        "diagnostics": { "$ref": "#/$defs/diagnostics" }
+    },
+
+    "$defs": {
+        "hash": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{8,64}$",
+            "description": "sha256 over the canonical JSON encoding, truncated. Stable across compiles of unchanged code."
+        },
+
+        "application": {
+            "type": "object",
+            "required": ["key", "name", "environment"],
+            "properties": {
+                "key": { "type": "string", "minLength": 1 },
+                "name": { "type": "string" },
+                "environment": {
+                    "type": "string",
+                    "not": { "const": "production" },
+                    "description": "This package must never run in production, so a document claiming to come from there is invalid."
+                },
+                "base_url": { "type": "string" },
+                "api_prefix": { "type": ["string", "null"] },
+                "laravel_version": { "type": "string" },
+                "package_version": { "type": ["string", "null"] },
+                "git": {
+                    "type": ["object", "null"],
+                    "properties": {
+                        "branch": { "type": ["string", "null"] },
+                        "commit": { "type": ["string", "null"] }
+                    }
+                }
+            }
+        },
+
+        "capabilities": {
+            "type": "object",
+            "required": ["references", "tokens", "scenarios", "reset", "response_snapshots"],
+            "additionalProperties": { "type": "boolean" },
+            "properties": {
+                "references": { "type": "boolean" },
+                "tokens": { "type": "boolean" },
+                "scenarios": { "type": "boolean" },
+                "reset": { "type": "boolean" },
+                "response_snapshots": { "type": "boolean" }
+            }
+        },
+
+        "auth": {
+            "type": "object",
+            "required": ["schemes", "test_roles"],
+            "properties": {
+                "schemes": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["id", "type"],
+                        "properties": {
+                            "id": { "type": "string" },
+                            "type": { "type": "string" },
+                            "scheme": { "type": "string" },
+                            "header": { "type": "string" },
+                            "description": { "type": "string" }
+                        }
+                    }
+                },
+                "test_roles": { "type": "array", "items": { "type": "string" } }
+            }
+        },
+
+        "module": {
+            "type": "object",
+            "required": ["key", "name", "endpoint_count"],
+            "properties": {
+                "key": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+                "name": { "type": "string" },
+                "endpoint_count": { "type": "integer", "minimum": 0 }
+            }
+        },
+
+        "endpoint": {
+            "type": "object",
+            "required": ["id", "hash", "module", "method", "uri", "action", "auth", "input", "query", "response"],
+            "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "hash": { "$ref": "#/$defs/hash" },
+                "module": { "type": "string" },
+                "route_name": { "type": ["string", "null"] },
+                "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+                "uri": { "type": "string", "pattern": "^/" },
+                "path_parameters": { "type": "array", "items": { "$ref": "#/$defs/pathParameter" } },
+                "summary": { "type": ["string", "null"] },
+                "deprecated": { "type": "boolean" },
+                "action": {
+                    "type": "object",
+                    "required": ["class", "type", "as_controller"],
+                    "properties": {
+                        "class": { "type": ["string", "null"] },
+                        "type": { "enum": ["laravel-actions", "controller", "closure"] },
+                        "as_controller": { "type": "boolean" }
+                    }
+                },
+                "middleware": { "type": "array", "items": { "type": "string" } },
+                "auth": {
+                    "type": "object",
+                    "required": ["required"],
+                    "properties": {
+                        "required": { "type": "boolean" },
+                        "scheme": { "type": ["string", "null"] },
+                        "guard": { "type": ["string", "null"] },
+                        "abilities": { "type": "array", "items": { "type": "string" } },
+                        "roles": { "type": "array", "items": { "type": "string" } }
+                    }
+                },
+                "input": {
+                    "oneOf": [
+                        { "type": "null" },
+                        {
+                            "type": "object",
+                            "required": ["location", "content_type", "data_class", "schema"],
+                            "properties": {
+                                "location": { "enum": ["body", "query"] },
+                                "content_type": { "type": "string" },
+                                "data_class": { "type": "string" },
+                                "schema": { "$ref": "#/$defs/ref" }
+                            }
+                        }
+                    ]
+                },
+                "query": {
+                    "oneOf": [
+                        { "type": "null" },
+                        { "$ref": "#/$defs/query" }
+                    ]
+                },
+                "response": { "$ref": "#/$defs/response" },
+                "preconditions": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["description"],
+                        "properties": {
+                            "description": { "type": "string" },
+                            "scenario": { "type": "string" }
+                        }
+                    }
+                }
+            }
+        },
+
+        "pathParameter": {
+            "type": "object",
+            "required": ["name", "required", "x-faker"],
+            "properties": {
+                "name": { "type": "string" },
+                "required": { "type": "boolean" },
+                "binding": {
+                    "type": "object",
+                    "required": ["model", "key"],
+                    "properties": {
+                        "model": { "type": "string" },
+                        "key": { "type": "string" }
+                    }
+                },
+                "schema": { "type": "object" },
+                "x-faker": { "$ref": "#/$defs/faker" }
+            }
+        },
+
+        "query": {
+            "type": "object",
+            "required": ["source"],
+            "properties": {
+                "source": { "type": "string" },
+                "x-laravel": {
+                    "type": "object",
+                    "properties": {
+                        "query_source": { "enum": ["contract", "probe"] }
+                    }
+                },
+                "filters": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["name", "query_key", "type", "multiple"],
+                        "properties": {
+                            "name": { "type": "string" },
+                            "query_key": { "type": "string" },
+                            "type": {
+                                "enum": ["exact", "partial", "begins_with", "ends_with", "scope", "trashed", "callback", "custom"]
+                            },
+                            "multiple": { "type": "boolean" },
+                            "allowed_values": { "type": "array" },
+                            "relation": { "type": "string" },
+                            "class": { "type": "string" },
+                            "value_hint": { "type": "string" },
+                            "default": {},
+                            "x-laravel": { "type": "object" },
+                            "x-faker": { "$ref": "#/$defs/faker" }
+                        }
+                    }
+                },
+                "sorts": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["name", "query_key", "default"],
+                        "properties": {
+                            "name": { "type": "string" },
+                            "query_key": { "type": "string" },
+                            "default": { "type": "boolean" },
+                            "default_direction": { "enum": ["asc", "desc"] }
+                        }
+                    }
+                },
+                "includes": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["name", "type", "count_variant"],
+                        "properties": {
+                            "name": { "type": "string" },
+                            "type": { "type": "string" },
+                            "count_variant": { "type": "boolean" }
+                        }
+                    }
+                },
+                "fields": {
+                    "type": "object",
+                    "additionalProperties": { "type": "array", "items": { "type": "string" } }
+                },
+                "pagination": {
+                    "type": "object",
+                    "required": ["style", "query_keys", "per_page_default", "per_page_max"],
+                    "properties": {
+                        "style": { "enum": ["page", "cursor", "simple"] },
+                        "query_keys": { "type": "object", "additionalProperties": { "type": "string" } },
+                        "per_page_default": { "type": "integer", "minimum": 1 },
+                        "per_page_max": { "type": "integer", "minimum": 1 }
+                    }
+                }
+            }
+        },
+
+        "response": {
+            "type": "object",
+            "required": ["success_status", "shape"],
+            "properties": {
+                "success_status": { "type": "integer", "minimum": 100, "maximum": 599 },
+                "transformer": { "type": ["string", "null"] },
+                "serializer": { "type": ["string", "null"] },
+                "shape": { "enum": ["opaque", "collection", "data_object", "empty"] },
+                "schema": { "$ref": "#/$defs/ref" },
+                "available_includes": { "type": "array", "items": { "type": "string" } },
+                "default_includes": { "type": "array", "items": { "type": "string" } },
+                "snapshot": {
+                    "oneOf": [
+                        { "type": "null" },
+                        {
+                            "type": "object",
+                            "required": ["captured_at", "hash", "example"],
+                            "properties": {
+                                "captured_at": { "type": "string" },
+                                "hash": { "$ref": "#/$defs/hash" },
+                                "example": {}
+                            }
+                        }
+                    ]
+                },
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["status", "schema"],
+                        "properties": {
+                            "status": { "type": "integer" },
+                            "schema": { "$ref": "#/$defs/ref" }
+                        }
+                    }
+                }
+            }
+        },
+
+        "components": {
+            "type": "object",
+            "required": ["data_objects", "responses"],
+            "properties": {
+                "data_objects": {
+                    "type": "object",
+                    "propertyNames": {
+                        "pattern": "^[A-Za-z0-9_]+\\.[A-Za-z0-9_]+$",
+                        "description": "Module.ClassName, not an FQCN, so JSON Pointers stay clean."
+                    },
+                    "additionalProperties": { "$ref": "#/$defs/dataObject" }
+                },
+                "responses": {
+                    "type": "object",
+                    "additionalProperties": { "type": "object" }
+                }
+            }
+        },
+
+        "dataObject": {
+            "type": "object",
+            "required": ["$schema", "title", "x-laravel", "type", "properties"],
+            "properties": {
+                "$schema": { "type": "string" },
+                "title": { "type": "string" },
+                "x-laravel": {
+                    "type": "object",
+                    "required": ["class", "hash"],
+                    "properties": {
+                        "class": { "type": "string" },
+                        "hash": { "$ref": "#/$defs/hash" }
+                    }
+                },
+                "type": { "const": "object" },
+                "additionalProperties": { "type": "boolean" },
+                "required": { "type": "array", "items": { "type": "string" } },
+                "properties": {
+                    "type": "object",
+                    "additionalProperties": { "$ref": "#/$defs/property" }
+                }
+            }
+        },
+
+        "property": {
+            "type": "object",
+            "required": ["x-faker"],
+            "properties": {
+                "$ref": { "type": "string" },
+                "oneOf": { "type": "array" },
+                "type": {
+                    "oneOf": [
+                        { "$ref": "#/$defs/jsonType" },
+                        { "type": "array", "items": { "$ref": "#/$defs/jsonType" }, "minItems": 1 }
+                    ]
+                },
+                "format": { "type": "string" },
+                "enum": { "type": "array" },
+                "default": {},
+                "pattern": { "type": "string" },
+                "minLength": { "type": "integer" },
+                "maxLength": { "type": "integer" },
+                "minimum": { "type": "number" },
+                "maximum": { "type": "number" },
+                "exclusiveMinimum": { "type": "number" },
+                "exclusiveMaximum": { "type": "number" },
+                "multipleOf": { "type": "number", "exclusiveMinimum": 0 },
+                "minItems": { "type": "integer" },
+                "maxItems": { "type": "integer" },
+                "uniqueItems": { "type": "boolean" },
+                "items": { "type": "object" },
+                "additionalProperties": { "type": ["object", "boolean"] },
+                "properties": { "type": "object" },
+                "description": { "type": "string" },
+                "x-laravel": { "$ref": "#/$defs/laravel" },
+                "x-faker": { "$ref": "#/$defs/faker" }
+            }
+        },
+
+        "jsonType": {
+            "enum": ["string", "integer", "number", "boolean", "array", "object", "null"]
+        },
+
+        "laravel": {
+            "type": "object",
+            "properties": {
+                "property": { "type": ["string", "null"] },
+                "input_name": { "type": "string" },
+                "rules": { "type": "array", "items": { "type": "string" } },
+                "optional": { "type": "boolean" },
+                "nullable": { "type": "boolean" },
+                "present_only": { "type": "boolean" },
+                "synthetic": { "type": "boolean" },
+                "default": {},
+                "enum_class": { "type": "string" },
+                "data_collection_of": { "type": "string" },
+                "upload": { "type": "boolean" },
+                "json": { "type": "boolean" },
+                "exists": { "$ref": "#/$defs/tableColumn" },
+                "unique": { "$ref": "#/$defs/tableColumn" },
+                "date_format": { "type": "string" },
+                "date_bounds": { "type": "object" },
+                "conditional_rules": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["rule"],
+                        "properties": {
+                            "rule": { "type": "string" },
+                            "field": { "type": "string" },
+                            "values": { "type": "array" },
+                            "resolvable": { "type": "boolean" },
+                            "note": { "type": "string" }
+                        }
+                    }
+                }
+            }
+        },
+
+        "tableColumn": {
+            "type": "object",
+            "required": ["table", "column"],
+            "properties": {
+                "table": { "type": "string" },
+                "column": { "type": "string" }
+            }
+        },
+
+        "faker": {
+            "type": "object",
+            "required": ["strategy"],
+            "description": "An abstract generation strategy. The package never names a generator library method; the Central App maps strategy to a generator, and falls back by JSON Schema type when it meets an unknown one.",
+            "properties": {
+                "strategy": {
+                    "enum": [
+                        "reference", "enum", "pattern", "int", "float", "boolean",
+                        "sentence", "paragraph", "person.firstName", "person.lastName",
+                        "internet.email", "phone", "date", "date_range", "uuid", "url",
+                        "address.street", "address.city", "address.state", "address.postcode",
+                        "address.country", "company.name", "slug", "latitude", "longitude",
+                        "collection", "key_value_map", "alphanumeric", "timezone",
+                        "mirror", "distinct_from", "unresolvable"
+                    ]
+                },
+                "reason": { "type": "string" },
+                "pattern": { "type": "string" },
+                "format": { "type": "string" },
+                "separator": { "type": "string" },
+                "values": { "type": "array" },
+                "length": { "type": "integer", "minimum": 1 },
+                "min": { "type": "number" },
+                "max": { "type": "number" },
+                "unique": { "type": "boolean" },
+                "include_probability": { "type": "number", "minimum": 0, "maximum": 1 },
+                "true_probability": { "type": "number", "minimum": 0, "maximum": 1 },
+                "mirrors": { "type": "string" },
+                "count": {
+                    "type": "object",
+                    "required": ["min", "max"],
+                    "properties": {
+                        "min": { "type": "integer", "minimum": 0 },
+                        "max": { "type": "integer", "minimum": 0 }
+                    }
+                },
+                "range": { "type": "object" },
+                "reference": {
+                    "type": "object",
+                    "required": ["table", "column"],
+                    "properties": {
+                        "table": { "type": "string" },
+                        "column": { "type": "string" },
+                        "constraint": { "type": "object" }
+                    }
+                },
+                "required_when": {
+                    "type": "object",
+                    "required": ["field"],
+                    "properties": {
+                        "field": { "type": "string" },
+                        "in": { "type": "array" }
+                    }
+                },
+                "omit_when": {
+                    "type": "object",
+                    "required": ["field"],
+                    "properties": {
+                        "field": { "type": "string" },
+                        "in": { "type": "array" }
+                    }
+                }
+            },
+            "allOf": [
+                {
+                    "if": { "properties": { "strategy": { "const": "unresolvable" } }, "required": ["strategy"] },
+                    "then": {
+                        "required": ["reason"],
+                        "description": "Being explicit that a field cannot be generated is the feature. Saying so without saying why is not."
+                    }
+                },
+                {
+                    "if": { "properties": { "strategy": { "const": "reference" } }, "required": ["strategy"] },
+                    "then": { "required": ["reference"] }
+                }
+            ]
+        },
+
+        "ref": {
+            "type": "object",
+            "required": ["$ref"],
+            "properties": {
+                "$ref": { "type": "string", "pattern": "^#/components/" }
+            }
+        },
+
+        "diagnostics": {
+            "type": "object",
+            "required": ["unmapped_routes", "warnings", "counts"],
+            "properties": {
+                "unmapped_routes": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["endpoint_id", "method", "uri", "reason"],
+                        "properties": {
+                            "endpoint_id": { "type": "string" },
+                            "route_name": { "type": "string" },
+                            "method": { "type": "string" },
+                            "uri": { "type": "string" },
+                            "action": { "type": ["string", "null"] },
+                            "reason": {
+                                "enum": ["no_data_class", "multipart", "closure_action", "unsupported_action"]
+                            },
+                            "detail": { "type": "string" }
+                        }
+                    }
+                },
+                "warnings": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["code", "detail"],
+                        "properties": {
+                            "code": {
+                                "enum": [
+                                    "unnamed_route", "unsupported_action", "rule_conflict",
+                                    "cast_input_assumed", "opaque_rule", "probed_query_config",
+                                    "no_query_config", "pcre_only_pattern", "unresolvable_field",
+                                    "opaque_response", "uncompilable_data_class",
+                                    "multipart_endpoint", "recursive_data_class"
+                                ]
+                            },
+                            "endpoint_id": { "type": "string" },
+                            "component": { "type": "string" },
+                            "property": { "type": "string" },
+                            "detail": { "type": "string" }
+                        }
+                    }
+                },
+                "counts": {
+                    "type": "object",
+                    "properties": {
+                        "routes_total": { "type": "integer", "minimum": 0 },
+                        "routes_mapped": { "type": "integer", "minimum": 0 },
+                        "routes_unmapped": { "type": "integer", "minimum": 0 },
+                        "data_objects": { "type": "integer", "minimum": 0 },
+                        "endpoints_with_snapshots": { "type": "integer", "minimum": 0 },
+                        "warnings": { "type": "integer", "minimum": 0 },
+                        "compile_ms": { "type": "integer", "minimum": 0 }
+                    }
+                }
+            }
+        }
+    }
+}

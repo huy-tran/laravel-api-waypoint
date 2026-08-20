@@ -1,0 +1,9 @@
+/vendor/
+/build/
+/.phpunit.cache/
+/workbench/vendor/
+composer.lock
+.phpunit.result.cache
+.DS_Store
+Thumbs.db
+/tests/Fixtures/actual.json
