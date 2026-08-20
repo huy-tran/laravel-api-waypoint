@@ -49,7 +49,7 @@ Releases are cut by the **Release** workflow, never by tagging locally.
 
 1. Move the entries you are shipping out of `## [Unreleased]` into a new
    `## [x.y.z] - YYYY-MM-DD` section.
-2. Commit that to `main`.
+2. Commit that to `master`.
 3. Run the **Release** workflow from the Actions tab, entering `x.y.z`.
 
 The workflow refuses to proceed unless the version is valid semver, has a matching
