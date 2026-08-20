@@ -162,11 +162,16 @@ jobs:
         run: vendor/bin/pest --ci
 
       - name: Confirm the package installs from a clean tree
-        # `composer install --no-dev` is what a consumer's CI actually runs, and it
-        # is the first place a missing runtime dependency shows up.
+        # Proves the runtime requires are sufficient on their own: a dependency
+        # that only lives in require-dev shows up here as an autoload failure.
+        #
+        # --no-scripts because this repository's post-autoload-dump runs Testbench,
+        # which is a dev dependency and absent by definition. Composer only runs the
+        # root package's scripts, so a consumer never executes them either; running
+        # them here would test the development tooling rather than the package.
         run: |
           rm -rf vendor composer.lock
-          composer install --no-dev --prefer-dist --no-interaction --no-progress
+          composer install --no-dev --no-scripts --prefer-dist --no-interaction --no-progress
           php -r 'require "vendor/autoload.php"; new ReflectionClass(Hygo\ApiWaypoint\ApiWaypointServiceProvider::class); echo "autoloads without dev dependencies\n";'
 
       - name: Stop here on a dry run
