@@ -19,7 +19,7 @@ A local companion app (the Central App) pulls that document and builds editable,
 | Dependency | Version | |
 |---|---|---|
 | PHP | ^8.3 | |
-| Laravel | ^11.0 \|\| ^12.0 \|\| ^13.0 | |
+| Laravel | ^12.0 \|\| ^13.0 | |
 | `spatie/laravel-data` | ^4.0 | required |
 | `lorisleiva/laravel-actions` | ^2.7 | optional |
 | `nwidart/laravel-modules` | ^11.0 \|\| ^12.0 | optional, module attribution |
@@ -28,6 +28,8 @@ A local companion app (the Central App) pulls that document and builds editable,
 | `laravel/sanctum` | ^4.0 | optional, token minting |
 
 Every optional dependency is detected at runtime. The package installs and works without any of them; it just degrades to "no module attribution / no query config / no transformer info".
+
+Laravel 11 is not supported. Its security-fix window closed in March 2026, every 11.x release now carries an unpatched advisory, and Composer refuses to install advisory-affected packages by default. Supporting a version that cannot be installed without switching that protection off would be a claim rather than a fact.
 
 ---
 

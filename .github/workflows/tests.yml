@@ -16,14 +16,15 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         php: ['8.3', '8.4']
-        laravel: [11, 12, 13]
+        # Laravel 11 is deliberately absent: its security-fix window closed in
+        # March 2026 and every 11.x release is now flagged by an advisory, so
+        # Composer refuses to install it without disabling advisory blocking.
+        # A support claim that cannot be installed is not a support claim.
+        laravel: [12, 13]
         stability: [prefer-stable]
         include:
           # The Testbench major is what actually pins the framework major, so it
           # travels with the Laravel leg rather than being resolved by chance.
-          - laravel: 11
-            testbench: 9
-            pest: 3
           - laravel: 12
             testbench: 10
             pest: 3
@@ -56,7 +57,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, sqlite3, pdo_sqlite
+          extensions: dom, curl, fileinfo, libxml, mbstring, zip, pcntl, sqlite3, pdo_sqlite
           coverage: none
 
       - name: Resolve dependencies
@@ -70,9 +71,12 @@ jobs:
             "pestphp/pest-plugin-laravel:^${{ matrix.pest }}.0"
           composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
 
+      # --direct, because `composer show` accepts one package at a time and
+      # silently turns a list into an argument error that fails the job before a
+      # single test has run.
       - name: Report the resolved versions
         shell: bash
-        run: composer show laravel/framework orchestra/testbench spatie/laravel-data pestphp/pest
+        run: composer show --direct
 
       # Includes the golden-file test, which fails if the committed fixture no
       # longer matches what the compiler produces, and the contract-conformance
@@ -93,7 +97,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: dom, curl, libxml, mbstring, zip, sqlite3, pdo_sqlite
+          extensions: dom, curl, fileinfo, libxml, mbstring, zip, sqlite3, pdo_sqlite
           coverage: none
 
       - name: Validate composer.json

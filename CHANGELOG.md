@@ -21,6 +21,10 @@ First release. The compiler and the full HTTP surface are complete and covered b
 383 tests, but the package has not yet been run against a production-sized
 application, which is why this is 0.1.0 rather than 1.0.0.
 
+Requires Laravel 12 or 13. Laravel 11 is not supported: its security-fix window
+closed in March 2026 and every 11.x release now carries an unpatched advisory, so
+Composer declines to install it at all.
+
 ### Added
 
 - Schema compiler: routes, modules, actions, Spatie Data input schemas, Spatie
