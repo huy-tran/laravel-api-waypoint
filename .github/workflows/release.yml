@@ -1,8 +1,18 @@
 name: release
 
-# Tagging is done here rather than locally, so a release cannot happen without
-# the full check suite passing first, and so the tag, the CHANGELOG section and
-# the GitHub Release notes can never disagree with each other.
+# A release can be started two ways, and both run the same checks.
+#
+#   workflow_dispatch  You give a version; the workflow verifies it, runs every
+#                      check, and only then creates the tag. Checks gate the tag.
+#                      Requires admin rights on the repository.
+#
+#   push of a v* tag   You create the tag; the workflow verifies it, runs every
+#                      check, and publishes the release. Needs only push access,
+#                      which is what most maintainers actually have.
+#
+# The dispatch path is preferable when it is available, because the tag cannot
+# come into existence unless the checks pass first. On the tag path the tag is
+# already public by the time the checks run, so a failure means deleting it.
 #
 # Composer packages take their version from the git tag, not from a version field
 # in composer.json: `composer validate --strict` warns when that field is present
@@ -21,6 +31,9 @@ on:
         required: false
         default: false
         type: boolean
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
@@ -29,7 +42,6 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    name: release ${{ inputs.version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -38,29 +50,58 @@ jobs:
           # release-notes step can see the whole CHANGELOG.
           fetch-depth: 0
 
-      - name: Refuse to release from anywhere but the default branch
-        run: |
-          if [ "${{ github.ref_name }}" != "${{ github.event.repository.default_branch }}" ]; then
-            echo "::error::Releases are cut from ${{ github.event.repository.default_branch }}, not ${{ github.ref_name }}."
-            exit 1
-          fi
-
-      - name: Validate the version
+      - name: Work out what is being released
         id: version
         run: |
-          VERSION="${{ inputs.version }}"
+          if [ "${{ github.event_name }}" = "push" ]; then
+            MODE=tag
+            TAG="${{ github.ref_name }}"
+            VERSION="${TAG#v}"
+          else
+            MODE=dispatch
+            VERSION="${{ inputs.version }}"
+            TAG="v$VERSION"
+          fi
 
-          # Semver, optionally with a prerelease. Rejects a leading v so the tag
-          # name is formed in exactly one place, below.
+          # Semver, optionally with a prerelease. On the dispatch path this also
+          # rejects a leading v, so the tag name is formed in exactly one place.
           if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
-            echo "::error::[$VERSION] is not a semver version. Enter 1.2.3, not v1.2.3."
+            echo "::error::[$VERSION] is not a semver version. Use 1.2.3 (tag v1.2.3)."
             exit 1
           fi
 
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          {
+            echo "mode=$MODE"
+            echo "version=$VERSION"
+            echo "tag=$TAG"
+          } >> "$GITHUB_OUTPUT"
 
-      - name: Refuse to re-release an existing tag
+          echo "Releasing $TAG via the $MODE path."
+
+      - name: Check the commit is on the default branch
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          if [ "${{ steps.version.outputs.mode }}" = "dispatch" ]; then
+            # A dispatch runs against a ref directly, so just check which one.
+            if [ "${{ github.ref_name }}" != "$DEFAULT_BRANCH" ]; then
+              echo "::error::Releases are cut from $DEFAULT_BRANCH, not ${{ github.ref_name }}."
+              exit 1
+            fi
+            exit 0
+          fi
+
+          # A tag can point anywhere. Refuse to release one cut from a commit that
+          # never reached the default branch.
+          git fetch --no-tags origin "+refs/heads/$DEFAULT_BRANCH:refs/remotes/origin/$DEFAULT_BRANCH"
+
+          if ! git merge-base --is-ancestor HEAD "refs/remotes/origin/$DEFAULT_BRANCH"; then
+            echo "::error::${{ steps.version.outputs.tag }} points at a commit that is not on $DEFAULT_BRANCH."
+            exit 1
+          fi
+
+      - name: Refuse to reuse an existing tag
+        if: ${{ steps.version.outputs.mode == 'dispatch' }}
         run: |
           if git rev-parse "refs/tags/${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
             echo "::error::Tag ${{ steps.version.outputs.tag }} already exists. Bump the version."
@@ -68,7 +109,6 @@ jobs:
           fi
 
       - name: Extract the release notes
-        id: notes
         run: |
           VERSION="${{ steps.version.outputs.version }}"
 
@@ -136,7 +176,7 @@ jobs:
           exit 0
 
       - name: Create and push the tag
-        if: ${{ ! inputs.dry-run }}
+        if: ${{ steps.version.outputs.mode == 'dispatch' && ! inputs.dry-run }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -158,6 +198,8 @@ jobs:
         run: |
           {
             echo "### Released ${{ steps.version.outputs.tag }}"
+            echo
+            echo "Started via the **${{ steps.version.outputs.mode }}** path."
             echo
             echo "Packagist updates from the tag within a minute or so, provided the"
             echo "GitHub integration is connected. Check:"
