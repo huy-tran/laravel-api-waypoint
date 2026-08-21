@@ -96,6 +96,32 @@ it('renders both templates as blade without failing', function (): void {
         ->and($guideline)->toContain('php artisan waypoint:check');
 });
 
+it('ships no byte-order mark, which would hide the skill entirely', function (): void {
+    // Boost finds frontmatter with /^\s*---\s*\n/, and a BOM is not \s. One saved
+    // by a Windows editor is invisible in a diff and drops the skill silently.
+    foreach (['guidelines/core.blade.php', 'skills/api-waypoint/SKILL.blade.php'] as $template) {
+        expect(file_get_contents(boostPath($template)))->not->toStartWith("\u{FEFF}");
+    }
+});
+
+it('never puts a blade expression inside a boostsnippet block', function (): void {
+    // Boost stashes every @boostsnippet body behind a placeholder, renders Blade,
+    // then restores the body verbatim (RendersBladeGuidelines, in that order), so
+    // code samples survive Blade untouched. A {{ }} in there therefore ships as
+    // literal template text. Asserting on rendered output cannot catch this: a
+    // plain Blade::render interpolates everywhere, which is how it shipped once.
+    foreach (['guidelines/core.blade.php', 'skills/api-waypoint/SKILL.blade.php'] as $template) {
+        $contents = (string) file_get_contents(boostPath($template));
+
+        preg_match_all('/@boostsnippet\(.*?\)(?P<body>.*?)@endboostsnippet/s', $contents, $matches);
+
+        foreach ($matches['body'] ?? [] as $body) {
+            expect($body)->not->toContain('{{')
+                ->and($body)->not->toContain('$assist');
+        }
+    }
+});
+
 it('names only artisan commands that exist', function (): void {
     $rendered = renderBoostTemplate('guidelines/core.blade.php')
         .renderBoostTemplate('skills/api-waypoint/SKILL.blade.php');

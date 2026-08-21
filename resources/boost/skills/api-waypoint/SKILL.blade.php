@@ -43,8 +43,8 @@ The equivalent by hand:
 
 @boostsnippet("Manual setup", "shell")
 composer require --dev hygo/laravel-api-waypoint
-{{ $assist->artisanCommand('vendor:publish --tag=api-waypoint-config') }}
-{{ $assist->artisanCommand('vendor:publish --tag=api-waypoint-migrations') }}   # only if you use scenarios
+php artisan vendor:publish --tag=api-waypoint-config
+php artisan vendor:publish --tag=api-waypoint-migrations   # only if you use scenarios
 @endboostsnippet
 
 @boostsnippet("Local .env only", "dotenv")
@@ -85,7 +85,7 @@ Registration is conditional, not protected. Routes exist only when **all three**
 A secret mismatch returns 404, never 403, with Laravel's own `{"message": "Not Found."}`, so a probe cannot discover that anything is there. The cost is that an unregistered surface and a wrong secret look identical. Do not guess between them: ask the route table, which involves neither the secret nor HTTP.
 
 @boostsnippet("Telling the two apart", "shell")
-{{ $assist->artisanCommand('route:list --path=api-waypoint') }}
+php artisan route:list --path=api-waypoint
 # 7 routes listed  -> registered; a 404 means the secret did not match
 # no routes listed -> one of the three registration conditions is unmet
 @endboostsnippet

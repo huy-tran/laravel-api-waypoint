@@ -15,6 +15,19 @@ new format version, not merely a new package major.
 
 ## [Unreleased]
 
+### Fixed
+
+- The skill shipped three `{{ $assist->artisanCommand(...) }}` calls inside
+  `@boostsnippet` blocks, which reach an installed project as literal template
+  text. Boost stashes each snippet body behind a placeholder, renders Blade, then
+  restores the body verbatim, so a snippet body is deliberately never rendered.
+  Those three are now literal `php artisan` lines.
+- Two guards, because the existing test asserted on its own `Blade::render`
+  output, which interpolates everywhere and so could never have caught the above:
+  one rejects `{{` or `$assist` anywhere in a snippet body, and one rejects a
+  byte-order mark, which Boost's frontmatter regex does not match and which would
+  make it drop the skill silently.
+
 ## [0.2.0] - 2026-08-21
 
 Adoption and agent support. The wire format is unchanged at `1.0`, and nothing in
