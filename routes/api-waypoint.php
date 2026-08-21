@@ -11,7 +11,7 @@ use Hygo\ApiWaypoint\Http\Middleware\LogWaypointRequest;
 use Hygo\ApiWaypoint\Http\Middleware\VerifyWaypointSecret;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix((string) config('api-waypoint.prefix', 'v1/api-waypoint'))
+Route::prefix((string) config('api-waypoint.prefix', '_api-waypoint'))
     ->middleware([VerifyWaypointSecret::class, LogWaypointRequest::class])
     ->name('api-waypoint.')
     ->group(function (): void {

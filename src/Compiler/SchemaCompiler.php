@@ -645,7 +645,7 @@ class SchemaCompiler
                 'scheme' => 'bearer',
                 'header' => 'Authorization',
                 'description' => 'Sanctum personal access token. Mint one via POST /'
-                    .trim((string) ($config['prefix'] ?? 'v1/api-waypoint'), '/').'/tokens.',
+                    .trim((string) ($config['prefix'] ?? '_api-waypoint'), '/').'/tokens.',
             ],
             'api_bearer' => [
                 'id' => 'api_bearer',

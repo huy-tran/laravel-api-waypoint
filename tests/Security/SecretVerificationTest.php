@@ -9,12 +9,12 @@ use Hygo\ApiWaypoint\Tests\TestCase;
  * the route exists, which is the one fact worth hiding.
  */
 dataset('waypoint routes', [
-    'schema' => ['GET', '/v1/api-waypoint'],
-    'manifest' => ['GET', '/v1/api-waypoint/manifest'],
-    'references' => ['GET', '/v1/api-waypoint/references/customers/uuid'],
-    'scenarios index' => ['GET', '/v1/api-waypoint/scenarios'],
-    'scenarios store' => ['POST', '/v1/api-waypoint/scenarios'],
-    'tokens' => ['POST', '/v1/api-waypoint/tokens'],
+    'schema' => ['GET', '/_api-waypoint'],
+    'manifest' => ['GET', '/_api-waypoint/manifest'],
+    'references' => ['GET', '/_api-waypoint/references/customers/uuid'],
+    'scenarios index' => ['GET', '/_api-waypoint/scenarios'],
+    'scenarios store' => ['POST', '/_api-waypoint/scenarios'],
+    'tokens' => ['POST', '/_api-waypoint/tokens'],
 ]);
 
 it('404s with no secret at all', function (string $method, string $uri): void {
@@ -59,6 +59,6 @@ it('never answers a guard failure with 403', function (string $method, string $u
 
 it('accepts the correct secret', function (): void {
     $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint')
+        ->getJson('/_api-waypoint')
         ->assertOk();
 });

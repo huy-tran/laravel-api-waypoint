@@ -50,9 +50,18 @@ return [
     |--------------------------------------------------------------------------
     | Route prefix
     |--------------------------------------------------------------------------
+    |
+    | Deliberately unversioned, and underscored the way first-party dev tooling
+    | is (_debugbar, _ignition). A version segment describes the application's
+    | own REST API and its compatibility promises; this surface is a dev tool
+    | with none of that, and squatting in v1/ both borrows a meaning it does not
+    | have and risks colliding with a real v1 route.
+    |
+    | The document is served at the prefix root, not at {prefix}/schema.
+    |
     */
 
-    'prefix' => env('API_WAYPOINT_PREFIX', 'v1/api-waypoint'),
+    'prefix' => env('API_WAYPOINT_PREFIX', '_api-waypoint'),
 
     /*
     |--------------------------------------------------------------------------
@@ -108,8 +117,8 @@ return [
     'routes' => [
         'include' => ['api/*'],
         'exclude' => [
-            'api/v1/api-waypoint*',
-            'v1/api-waypoint*',
+            'api/_api-waypoint*',
+            '_api-waypoint*',
             'sanctum/*',
             'horizon/*',
             'telescope/*',

@@ -56,7 +56,7 @@ it('compiles a document that validates against the contract', function (): void 
 
 it('serves a document over HTTP that validates against the contract', function (): void {
     $response = $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint')
+        ->getJson('/_api-waypoint')
         ->assertOk();
 
     $errors = validateAgainstContract($response->json());
@@ -113,8 +113,8 @@ it('emits only strategies the vocabulary knows', function (): void {
 });
 
 it('serves a manifest whose hashes agree with the document', function (): void {
-    $document = $this->withHeaders($this->secretHeader())->getJson('/v1/api-waypoint')->json();
-    $manifest = $this->withHeaders($this->secretHeader())->getJson('/v1/api-waypoint/manifest')->json();
+    $document = $this->withHeaders($this->secretHeader())->getJson('/_api-waypoint')->json();
+    $manifest = $this->withHeaders($this->secretHeader())->getJson('/_api-waypoint/manifest')->json();
 
     expect($manifest['schema_hash'])->toBe($document['schema_hash'])
         ->and($manifest['schema_format_version'])->toBe($document['schema_format_version']);

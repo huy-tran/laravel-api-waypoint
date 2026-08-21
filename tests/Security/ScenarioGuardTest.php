@@ -11,7 +11,7 @@ uses(RefreshDatabase::class);
 
 it('lists only the scenarios the application declared', function (): void {
     $response = $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/scenarios')
+        ->getJson('/_api-waypoint/scenarios')
         ->assertOk();
 
     expect($response->json('scenarios'))->toHaveCount(1)
@@ -22,7 +22,7 @@ it('lists only the scenarios the application declared', function (): void {
 
 it('runs a declared scenario and reports what it created', function (): void {
     $response = $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/scenarios', [
+        ->postJson('/_api-waypoint/scenarios', [
             'scenario' => 'paid_order',
             'parameters' => ['channel' => 'phone', 'line_count' => 3],
         ])
@@ -40,7 +40,7 @@ it('runs a declared scenario and reports what it created', function (): void {
 
 it('rejects an unknown scenario name and says what is available', function (): void {
     $response = $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/scenarios', ['scenario' => 'paid_invoice'])
+        ->postJson('/_api-waypoint/scenarios', ['scenario' => 'paid_invoice'])
         ->assertStatus(422);
 
     expect($response->json('code'))->toBe('waypoint.scenario_unknown')
@@ -51,7 +51,7 @@ it('rejects an unknown scenario name and says what is available', function (): v
 
 it('rejects a body that tries to pass a class name instead of a declared name', function (): void {
     $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/scenarios', [
+        ->postJson('/_api-waypoint/scenarios', [
             'scenario' => PaidOrder::class,
         ])
         ->assertStatus(422)
@@ -62,7 +62,7 @@ it('rejects a body that tries to pass a class name instead of a declared name', 
 
 it('ignores a factory or attribute payload smuggled alongside the name', function (): void {
     $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/scenarios', [
+        ->postJson('/_api-waypoint/scenarios', [
             'scenario' => 'paid_order',
             'factory' => Order::class,
             'attributes' => ['status' => 'cancelled', 'total_cents' => 999999],
@@ -79,7 +79,7 @@ it('ignores a factory or attribute payload smuggled alongside the name', functio
 
 it('validates parameters against the scenario\'s own declared schema', function (): void {
     $response = $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/scenarios', [
+        ->postJson('/_api-waypoint/scenarios', [
             'scenario' => 'paid_order',
             'parameters' => ['channel' => 'carrier_pigeon', 'line_count' => 99],
         ])
@@ -93,7 +93,7 @@ it('validates parameters against the scenario\'s own declared schema', function 
 
 it('rejects a non-object parameters payload', function (): void {
     $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/scenarios', [
+        ->postJson('/_api-waypoint/scenarios', [
             'scenario' => 'paid_order',
             'parameters' => 'not-an-object',
         ])
@@ -103,14 +103,14 @@ it('rejects a non-object parameters payload', function (): void {
 
 it('undoes a run through its cleanup token, in reverse creation order', function (): void {
     $token = $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/scenarios', ['scenario' => 'paid_order'])
+        ->postJson('/_api-waypoint/scenarios', ['scenario' => 'paid_order'])
         ->assertCreated()
         ->json('cleanup_token');
 
     $this->assertDatabaseCount('orders', 1);
 
     $this->withHeaders($this->secretHeader())
-        ->deleteJson('/v1/api-waypoint/scenarios/'.$token)
+        ->deleteJson('/_api-waypoint/scenarios/'.$token)
         ->assertOk()
         ->assertJsonPath('cleanup_token', $token);
 
@@ -120,14 +120,14 @@ it('undoes a run through its cleanup token, in reverse creation order', function
 
 it('404s an unknown cleanup token', function (): void {
     $this->withHeaders($this->secretHeader())
-        ->deleteJson('/v1/api-waypoint/scenarios/scn_nope')
+        ->deleteJson('/_api-waypoint/scenarios/scn_nope')
         ->assertNotFound()
         ->assertJsonPath('code', 'waypoint.cleanup_token_unknown');
 });
 
 it('records the run against the audit table with the actor fingerprint', function (): void {
     $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/scenarios', ['scenario' => 'paid_order'])
+        ->postJson('/_api-waypoint/scenarios', ['scenario' => 'paid_order'])
         ->assertCreated();
 
     $run = DB::table('api_waypoint_scenario_runs')->first();

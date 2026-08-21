@@ -6,7 +6,7 @@ Draft wire format for the Laravel package's dev-only endpoints, consumed by the 
 
 **Conventions used throughout**
 
-- Everything lives under `/v1/api-waypoint`, registered only when `app()->environment(['local','staging'])` and `config('api-waypoint.enabled') === true`.
+- Everything lives under `/_api-waypoint`, registered only when `app()->environment(['local','staging'])` and `config('api-waypoint.enabled') === true`.
 - Every request carries `X-Api-Waypoint-Secret`. No secret, no route (404, not 403, so the endpoint is not discoverable).
 - Field schemas are plain **JSON Schema draft 2020-12** plus two extension namespaces:
   - `x-laravel`, the Laravel facts JSON Schema cannot express (`exists:`, `unique:`, conditional rules, enum class).
@@ -15,14 +15,14 @@ Draft wire format for the Laravel package's dev-only endpoints, consumed by the 
 
 ---
 
-## 1. `GET /v1/api-waypoint`
+## 1. `GET /_api-waypoint`
 
 The whole catalogue, one document. A few hundred endpoints is a couple of MB before gzip, so no pagination.
 
 **Request**
 
 ```http
-GET /v1/api-waypoint HTTP/1.1
+GET /_api-waypoint HTTP/1.1
 Host: acme-orders.test
 X-Api-Waypoint-Secret: 7f3c9a1e...
 Accept: application/json
@@ -73,7 +73,7 @@ X-Api-Waypoint-Format: 1.0
         "type": "http",
         "scheme": "bearer",
         "header": "Authorization",
-        "description": "Sanctum personal access token. Mint one via POST /v1/api-waypoint/tokens."
+        "description": "Sanctum personal access token. Mint one via POST /_api-waypoint/tokens."
       }
     ],
     "test_roles": ["admin", "staff", "customer"]
@@ -490,7 +490,7 @@ X-Api-Waypoint-Format: 1.0
             },
             "x-faker": {
               "strategy": "unresolvable",
-              "reason": "Depends on the bound order's total. Pin a value or resolve via GET /v1/api-waypoint/references."
+              "reason": "Depends on the bound order's total. Pin a value or resolve via GET /_api-waypoint/references."
             }
           },
           "reason": {
@@ -599,7 +599,7 @@ X-Api-Waypoint-Format: 1.0
 
 Two options, both cheap. Use the manifest when you want partial refresh, the 304 when you just want "anything at all?".
 
-**2a. `GET /v1/api-waypoint` with `If-None-Match`**
+**2a. `GET /_api-waypoint` with `If-None-Match`**
 
 ```http
 HTTP/1.1 304 Not Modified
@@ -607,7 +607,7 @@ ETag: "sha256:4a8e2f9c1b7d3056"
 X-Api-Waypoint-Format: 1.0
 ```
 
-**2b. `GET /v1/api-waypoint/manifest`**
+**2b. `GET /_api-waypoint/manifest`**
 
 Per-endpoint and per-Data-object hashes only. A few KB, so the Central App can show "14 endpoints changed" without pulling the full document, and can decide what to re-diff.
 
@@ -633,14 +633,14 @@ Per-endpoint and per-Data-object hashes only. A few KB, so the Central App can s
 
 ---
 
-## 3. `GET /v1/api-waypoint/references/{table}/{column}`
+## 3. `GET /_api-waypoint/references/{table}/{column}`
 
 Live database lookup so `exists:` fields get real values instead of a random UUID that guarantees a 422. Powers the picker next to the field in the UI.
 
 **Request**
 
 ```http
-GET /v1/api-waypoint/references/customers/uuid?limit=5&label=name&q=oko HTTP/1.1
+GET /_api-waypoint/references/customers/uuid?limit=5&label=name&q=oko HTTP/1.1
 X-Api-Waypoint-Secret: 7f3c9a1e...
 ```
 
@@ -676,7 +676,7 @@ X-Api-Waypoint-Secret: 7f3c9a1e...
 With a constraint, as requested by `x-faker.reference.constraint`:
 
 ```http
-GET /v1/api-waypoint/references/orders/uuid?limit=2&where[status]=paid
+GET /_api-waypoint/references/orders/uuid?limit=2&where[status]=paid
 ```
 
 ```json
@@ -714,7 +714,7 @@ Empty is a normal answer and the UI should say so rather than showing an empty d
 
 ---
 
-## 4. `POST /v1/api-waypoint/tokens`
+## 4. `POST /_api-waypoint/tokens`
 
 No stored bearer tokens anywhere. Dev picks a role in the UI, gets a fresh short-lived token.
 
@@ -764,7 +764,7 @@ Creates prerequisite state for endpoints that need it, returning enough of the r
 
 The request accepts a **scenario name only**, never a class, factory or attribute set. Each host app declares its scenarios in config, so the HTTP surface cannot be used to invoke arbitrary code. See spec 1, section 3.5.
 
-### 5a. `GET /v1/api-waypoint/scenarios`
+### 5a. `GET /_api-waypoint/scenarios`
 
 Lets the Central App render the Setup tab without hardcoding anything.
 
@@ -796,7 +796,7 @@ Lets the Central App render the Setup tab without hardcoding anything.
 }
 ```
 
-### 5b. `POST /v1/api-waypoint/scenarios`
+### 5b. `POST /_api-waypoint/scenarios`
 
 **Request**
 
@@ -838,7 +838,7 @@ Lets the Central App render the Setup tab without hardcoding anything.
 }
 ```
 
-`cleanup_token` lets a later `DELETE /v1/api-waypoint/scenarios/{cleanup_token}` undo the run in reverse creation order, so repeated runs do not silt up the dev database.
+`cleanup_token` lets a later `DELETE /_api-waypoint/scenarios/{cleanup_token}` undo the run in reverse creation order, so repeated runs do not silt up the dev database.
 
 Unknown scenario name is a 422 that tells the caller what is available, so the Central App can recover without a resync:
 

@@ -61,7 +61,7 @@ And set `routes.include` to the prefix your endpoints are actually registered un
 Check it:
 
 ```bash
-curl -H "X-Api-Waypoint-Secret: $API_WAYPOINT_SECRET" http://your-app.test/v1/api-waypoint
+curl -H "X-Api-Waypoint-Secret: $API_WAYPOINT_SECRET" http://your-app.test/_api-waypoint
 ```
 
 You should get a document whose `schema_format_version` is `1.0`. If you get a 404, one of the three registration conditions is not met: see below.
@@ -111,13 +111,13 @@ Every waypoint request writes one line to `api-waypoint.log_channel`: route, met
 ## What it produces
 
 ```
-GET    /v1/api-waypoint                          the whole document
-GET    /v1/api-waypoint/manifest                 hashes only, for cheap refresh checks
-GET    /v1/api-waypoint/references/{table}/{col} live values for exists: fields
-GET    /v1/api-waypoint/scenarios                available scenarios and their parameters
-POST   /v1/api-waypoint/scenarios                run one
-DELETE /v1/api-waypoint/scenarios/{token}        undo a run
-POST   /v1/api-waypoint/tokens                   mint a short-lived role token
+GET    /_api-waypoint                          the whole document
+GET    /_api-waypoint/manifest                 hashes only, for cheap refresh checks
+GET    /_api-waypoint/references/{table}/{col} live values for exists: fields
+GET    /_api-waypoint/scenarios                available scenarios and their parameters
+POST   /_api-waypoint/scenarios                run one
+DELETE /_api-waypoint/scenarios/{token}        undo a run
+POST   /_api-waypoint/tokens                   mint a short-lived role token
 ```
 
 Field schemas are JSON Schema draft 2020-12 plus two extension namespaces:

@@ -26,7 +26,7 @@ class ImpersonatingResolver implements ResolvesWaypointUser
 
 it('mints a token for a declared role', function (): void {
     $response = $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/tokens', ['role' => 'admin'])
+        ->postJson('/_api-waypoint/tokens', ['role' => 'admin'])
         ->assertOk();
 
     expect($response->json('role'))->toBe('admin')
@@ -38,7 +38,7 @@ it('mints a token for a declared role', function (): void {
 
 it('mints for a user whose email matches the waypoint pattern', function (): void {
     $response = $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/tokens', ['role' => 'admin'])
+        ->postJson('/_api-waypoint/tokens', ['role' => 'admin'])
         ->assertOk();
 
     // waypoint+{role}@{host}, from APP_URL.
@@ -49,7 +49,7 @@ it('mints for a user whose email matches the waypoint pattern', function (): voi
 
 it('rejects a role that is not in config', function (): void {
     $response = $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/tokens', ['role' => 'superuser'])
+        ->postJson('/_api-waypoint/tokens', ['role' => 'superuser'])
         ->assertStatus(422);
 
     expect($response->json('code'))->toBe('waypoint.role_not_allowed')
@@ -60,7 +60,7 @@ it('rejects a role that is not in config', function (): void {
 
 it('rejects a missing role', function (): void {
     $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/tokens', [])
+        ->postJson('/_api-waypoint/tokens', [])
         ->assertStatus(422)
         ->assertJsonPath('code', 'waypoint.role_not_allowed');
 });
@@ -72,7 +72,7 @@ it('refuses to mint for a user the resolver picked outside the waypoint pattern'
     ]);
 
     $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/tokens', ['role' => 'rogue'])
+        ->postJson('/_api-waypoint/tokens', ['role' => 'rogue'])
         ->assertStatus(422)
         ->assertJsonPath('code', 'waypoint.resolver_returned_foreign_user');
 
@@ -83,7 +83,7 @@ it('clamps the requested TTL to the configured maximum', function (): void {
     config()->set('api-waypoint.tokens.max_ttl_minutes', 30);
 
     $response = $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/tokens', ['role' => 'admin', 'ttl_minutes' => 100000])
+        ->postJson('/_api-waypoint/tokens', ['role' => 'admin', 'ttl_minutes' => 100000])
         ->assertOk();
 
     $expiresAt = strtotime((string) $response->json('expires_at'));
@@ -93,7 +93,7 @@ it('clamps the requested TTL to the configured maximum', function (): void {
 
 it('never widens the abilities declared for the role', function (): void {
     $response = $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/tokens', [
+        ->postJson('/_api-waypoint/tokens', [
             'role' => 'customer',
             'abilities' => ['orders:read', 'billing:refund', '*'],
         ])
@@ -106,7 +106,7 @@ it('never widens the abilities declared for the role', function (): void {
 it('revokes the previous token for the same role rather than accumulating them', function (): void {
     foreach (range(1, 3) as $ignored) {
         $this->withHeaders($this->secretHeader())
-            ->postJson('/v1/api-waypoint/tokens', ['role' => 'admin'])
+            ->postJson('/_api-waypoint/tokens', ['role' => 'admin'])
             ->assertOk();
     }
 
@@ -117,6 +117,6 @@ it('404s the token route when token minting is switched off', function (): void 
     config()->set('api-waypoint.tokens.enabled', false);
 
     $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/tokens', ['role' => 'admin'])
+        ->postJson('/_api-waypoint/tokens', ['role' => 'admin'])
         ->assertNotFound();
 });

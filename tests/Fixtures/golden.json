@@ -1,15 +1,15 @@
 {
     "schema_format_version": "1.0",
-    "generated_at": "2026-08-20T02:06:07+00:00",
-    "schema_hash": "sha256:a4046677c2d0",
+    "generated_at": "2026-08-21T01:52:25+00:00",
+    "schema_hash": "sha256:47c56f579466",
     "application": {
         "key": "acme-orders-api",
         "name": "Acme Orders API",
         "environment": "local",
         "base_url": "http://acme-orders.test",
         "api_prefix": "/api/v1",
-        "laravel_version": "12.67.0",
-        "package_version": "1.0.0+no-version-set"
+        "laravel_version": "13.26.1",
+        "package_version": "dev-master"
     },
     "capabilities": {
         "references": true,
@@ -25,7 +25,7 @@
                 "type": "http",
                 "scheme": "bearer",
                 "header": "Authorization",
-                "description": "Sanctum personal access token. Mint one via POST /v1/api-waypoint/tokens."
+                "description": "Sanctum personal access token. Mint one via POST /_api-waypoint/tokens."
             }
         ],
         "test_roles": [
@@ -1212,7 +1212,7 @@
             }
         ],
         "counts": {
-            "compile_ms": 69,
+            "compile_ms": 74,
             "data_objects": 3,
             "endpoints_with_snapshots": 0,
             "routes_mapped": 4,

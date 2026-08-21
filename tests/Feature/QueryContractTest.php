@@ -108,7 +108,7 @@ it('uses the declared default page size', function (): void {
 });
 
 it('describes exactly what it enforces', function (): void {
-    $document = $this->withHeaders($this->secretHeader())->getJson('/v1/api-waypoint')->json();
+    $document = $this->withHeaders($this->secretHeader())->getJson('/_api-waypoint')->json();
     $query = endpoint($document, 'orders.index')['query'];
 
     $declared = collect($query['filters'])->pluck('name')->all();

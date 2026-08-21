@@ -15,6 +15,28 @@ new format version, not merely a new package major.
 
 ## [Unreleased]
 
+### Changed
+
+- The default route prefix is now `_api-waypoint`, was `v1/api-waypoint`. A version
+  segment describes the host application's own REST API and the compatibility
+  promises attached to it; a dev-only tool has none of those, and sitting in `v1/`
+  both borrows a meaning it does not have and can collide with a real `v1` route.
+  The leading underscore is the convention first-party dev tooling already uses -
+  Boost serves `_boost/browser-logs`, and `_debugbar` and `_ignition` were already
+  in this package's own `routes.exclude`.
+
+  An application that published `config/api-waypoint.php` keeps whatever prefix it
+  published: the published value wins over the package default, so nothing moves
+  until that line is changed. An application relying on the package default gets a
+  document at `/_api-waypoint` instead of `/v1/api-waypoint`, so point the Central
+  App at the new path, or set `API_WAYPOINT_PREFIX=v1/api-waypoint` to keep the old
+  one. The default `routes.exclude` patterns moved with it.
+
+  `waypoint:install`, `RoutePrefixDetector` and the compiler's token-minting hint
+  all read the configured prefix, so they follow automatically. The detector's
+  guard against nominating waypoint's own prefix is now only reachable by a host
+  that pins a versioned prefix, and its two tests pin one to keep testing it.
+
 ## [0.2.1] - 2026-08-21
 
 Corrects the shipped Boost skill. Nothing in the compiler, the HTTP surface or the

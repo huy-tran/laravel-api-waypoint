@@ -136,7 +136,9 @@ class RoutePrefixDetector
     protected function patternFor(string $uri): ?string
     {
         // Counting the package's own endpoints would let waypoint's prefix nominate
-        // itself: seven routes under v1/api-waypoint would propose v1/*.
+        // itself. The shipped prefix is unversioned and could never be proposed, but
+        // a host is free to pin API_WAYPOINT_PREFIX to a versioned one, and seven
+        // routes under v1/api-waypoint would propose v1/*.
         if ($this->isWaypointRoute($uri)) {
             return null;
         }

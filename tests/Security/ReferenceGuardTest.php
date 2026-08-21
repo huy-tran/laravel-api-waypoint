@@ -31,7 +31,7 @@ beforeEach(function (): void {
 
 it('reads a pair the compiled schema declares through an exists rule', function (): void {
     $response = $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/references/customers/uuid')
+        ->getJson('/_api-waypoint/references/customers/uuid')
         ->assertOk();
 
     expect($response->json('table'))->toBe('customers')
@@ -45,7 +45,7 @@ it('404s for a table that exists in the database but nowhere in the compiled sch
     expect(Schema::hasTable('order_lines'))->toBeTrue();
 
     $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/references/order_lines/id')
+        ->getJson('/_api-waypoint/references/order_lines/id')
         ->assertNotFound();
 });
 
@@ -53,19 +53,19 @@ it('404s for a column that exists on a whitelisted table but is not itself white
     expect(Schema::hasColumn('customers', 'email'))->toBeTrue();
 
     $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/references/customers/email')
+        ->getJson('/_api-waypoint/references/customers/email')
         ->assertNotFound();
 });
 
 it('404s for a table that does not exist at all', function (): void {
     $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/references/nope/id')
+        ->getJson('/_api-waypoint/references/nope/id')
         ->assertNotFound();
 });
 
 it('rejects a where key that is not a column on the target table', function (): void {
     $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/references/customers/uuid?where[not_a_column]=x')
+        ->getJson('/_api-waypoint/references/customers/uuid?where[not_a_column]=x')
         ->assertStatus(422);
 });
 
@@ -73,7 +73,7 @@ it('binds where values instead of interpolating them', function (): void {
     $injection = "'; DROP TABLE customers; --";
 
     $response = $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/references/customers/uuid?where[status]='.urlencode($injection))
+        ->getJson('/_api-waypoint/references/customers/uuid?where[status]='.urlencode($injection))
         ->assertOk();
 
     // The value matched nothing, and, crucially, the table is still there.
@@ -84,7 +84,7 @@ it('binds where values instead of interpolating them', function (): void {
 
 it('binds the q fragment instead of interpolating it', function (): void {
     $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/references/customers/uuid?q='.urlencode("%' OR '1'='1"))
+        ->getJson('/_api-waypoint/references/customers/uuid?q='.urlencode("%' OR '1'='1"))
         ->assertOk()
         ->assertJsonPath('values', []);
 
@@ -93,7 +93,7 @@ it('binds the q fragment instead of interpolating it', function (): void {
 
 it('applies a legitimate where constraint', function (): void {
     $response = $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/references/customers/uuid?where[status]=suspended')
+        ->getJson('/_api-waypoint/references/customers/uuid?where[status]=suspended')
         ->assertOk();
 
     expect($response->json('constraint'))->toBe(['status' => 'suspended'])
@@ -103,7 +103,7 @@ it('applies a legitimate where constraint', function (): void {
 
 it('never returns a redacted column as a value, a label or context', function (): void {
     $response = $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/references/customers/uuid?label=password')
+        ->getJson('/_api-waypoint/references/customers/uuid?label=password')
         ->assertOk();
 
     $body = $response->getContent();
@@ -124,7 +124,7 @@ it('never returns a redacted column as a value, a label or context', function ()
 
 it('refuses to filter on a redacted column', function (): void {
     $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/references/customers/uuid?where[password]=super-secret-hash')
+        ->getJson('/_api-waypoint/references/customers/uuid?where[password]=super-secret-hash')
         ->assertStatus(422);
 });
 
@@ -137,7 +137,7 @@ it('clamps limit to 50 however large the request asks for', function (): void {
     ], range(1, 80)));
 
     $response = $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/references/customers/uuid?limit=5000')
+        ->getJson('/_api-waypoint/references/customers/uuid?limit=5000')
         ->assertOk();
 
     expect($response->json('values'))->toHaveCount(50)
@@ -150,7 +150,7 @@ it('reports an empty result as a normal answer with a scenario hint', function (
     DB::table('customers')->delete();
 
     $response = $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/references/customers/uuid')
+        ->getJson('/_api-waypoint/references/customers/uuid')
         ->assertOk();
 
     expect($response->json('total_available'))->toBe(0)
@@ -167,11 +167,11 @@ it('opens up a pair listed in references.extra and nothing else', function (): v
     DB::table('products')->insert(['name' => 'Widget', 'price_cents' => 1200, 'is_active' => true]);
 
     $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/references/products/id')
+        ->getJson('/_api-waypoint/references/products/id')
         ->assertOk()
         ->assertJsonPath('values.0.label', 'Widget');
 
     $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/references/products/price_cents')
+        ->getJson('/_api-waypoint/references/products/price_cents')
         ->assertNotFound();
 });

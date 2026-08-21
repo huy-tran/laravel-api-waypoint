@@ -24,6 +24,16 @@ it('registers its routes when enabled, permitted and given a secret', function (
     expect(waypointRouteUris())->not->toBeEmpty();
 });
 
+it('serves from an unversioned prefix, so it cannot squat on an api version', function (): void {
+    // A dev tool has none of the compatibility promises a v1/ segment implies, and
+    // a host that serves a real v1 would have waypoint sitting inside its own API.
+    expect(waypointRouteUris())->not->toBeEmpty();
+
+    foreach (waypointRouteUris() as $uri) {
+        expect($uri)->toStartWith('_api-waypoint');
+    }
+});
+
 it('registers no routes at all when disabled', function (): void {
     $this->withWaypointConfig(['api-waypoint.enabled' => false]);
 
@@ -58,7 +68,7 @@ it('404s on a waypoint path when the package is disabled, even with the right se
     $this->withWaypointConfig(['api-waypoint.enabled' => false]);
 
     $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint')
+        ->getJson('/_api-waypoint')
         ->assertNotFound();
 });
 

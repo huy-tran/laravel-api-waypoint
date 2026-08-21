@@ -59,7 +59,7 @@ The shipped default is `['api/*']`. That is correct for an application routing t
 @boostsnippet("config/api-waypoint.php", "php")
 'routes' => [
     'include' => ['v1/*'],          // whatever this app really serves
-    'exclude' => ['v1/api-waypoint*', 'sanctum/*', 'horizon/*'],
+    'exclude' => ['_api-waypoint*', 'sanctum/*', 'horizon/*'],
     'required_middleware' => [],     // when non-empty, a route must carry one of these
 ],
 @endboostsnippet
@@ -76,7 +76,7 @@ Registration is conditional, not protected. Routes exist only when **all three**
 | `GET {prefix}/scenarios`, `POST {prefix}/scenarios`, `DELETE {prefix}/scenarios/{token}` | list, run and undo a scenario |
 | `POST {prefix}/tokens` | mint a short-lived role token |
 
-`{prefix}` is `api-waypoint.prefix`, default `v1/api-waypoint`. Every request carries the shared secret as the `X-Api-Waypoint-Secret` header.
+`{prefix}` is `api-waypoint.prefix`, default `_api-waypoint`. Every request carries the shared secret as the `X-Api-Waypoint-Secret` header.
 
 **The document is served at the prefix root**, `{prefix}` with nothing after it. Its route *name* is `api-waypoint.schema`, which is not a path segment: `{prefix}/schema` is a 404.
 

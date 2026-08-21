@@ -197,7 +197,7 @@ tests/
 Iterate `Route::getRoutes()`. Include a route when:
 
 - its URI matches one of `config('api-waypoint.routes.include')` patterns (default `['api/*']`), and
-- it does not match `config('api-waypoint.routes.exclude')` (default includes `api/v1/api-waypoint*`, Sanctum's CSRF route, Horizon, Telescope), and
+- it does not match `config('api-waypoint.routes.exclude')` (default includes `api/_api-waypoint*`, Sanctum's CSRF route, Horizon, Telescope), and
 - it has at least one of `config('api-waypoint.routes.required_middleware')` if that config is non-empty (default empty).
 
 Emit one candidate per HTTP method, so a route registered for both PUT and PATCH yields two endpoints with distinct IDs.
@@ -425,7 +425,7 @@ The exclusions matter: without them, every recompile produces a new hash and the
 
 ## 6. HTTP endpoints
 
-Routes live in `routes/api-waypoint.php`, prefixed by `config('api-waypoint.prefix')` (default `v1/api-waypoint`), with `VerifyWaypointSecret` and `LogWaypointRequest` applied to all. The wire format for every response below is normative in `api-waypoint-contract.md`; this section covers behaviour only.
+Routes live in `routes/api-waypoint.php`, prefixed by `config('api-waypoint.prefix')` (default `_api-waypoint`), with `VerifyWaypointSecret` and `LogWaypointRequest` applied to all. The wire format for every response below is normative in `api-waypoint-contract.md`; this section covers behaviour only.
 
 ### 6.1 `GET /` (schema)
 
@@ -483,13 +483,13 @@ return [
     'enabled' => env('API_WAYPOINT_ENABLED', false),
     'environments' => ['local'],
     'secret' => env('API_WAYPOINT_SECRET'),
-    'prefix' => 'v1/api-waypoint',
+    'prefix' => '_api-waypoint',
     'log_channel' => env('API_WAYPOINT_LOG_CHANNEL', 'stack'),
     'default_module' => 'app',
 
     'routes' => [
         'include' => ['api/*'],
-        'exclude' => ['api/v1/api-waypoint*', 'sanctum/*', 'horizon/*', 'telescope/*'],
+        'exclude' => ['api/_api-waypoint*', 'sanctum/*', 'horizon/*', 'telescope/*'],
         'required_middleware' => [],
     ],
 
@@ -610,7 +610,7 @@ A test that validates the compiled document against a JSON Schema of the contrac
 
 The package is done when all of the following are true.
 
-1. `composer require --dev hygo/laravel-api-waypoint` into a fresh Laravel 12 app with the stack listed in section 2, publish config, set two env vars, and `GET /v1/api-waypoint` returns a document that validates against `api-waypoint-1.0.json`.
+1. `composer require --dev hygo/laravel-api-waypoint` into a fresh Laravel 12 app with the stack listed in section 2, publish config, set two env vars, and `GET /_api-waypoint` returns a document that validates against `api-waypoint-1.0.json`.
 2. Pointed at a real, production-sized API application, `waypoint:check` reports zero `opaque_rule` warnings for endpoints that use only the rules in the 5.7 table, and every unmapped route has a correct, actionable `reason`.
 3. Two consecutive compiles of an unchanged codebase produce identical document, endpoint and component hashes.
 4. Changing one property on one Data class changes that component's hash and the hash of exactly the endpoints that reference it, and nothing else.

@@ -32,10 +32,17 @@ it('finds the workbench api prefix', function (): void {
 });
 
 it('never nominates the prefix the package serves itself from', function (): void {
-    // The HTTP surface is registered in tests, so seven routes sit under
-    // v1/api-waypoint. Counting them would let waypoint propose its own prefix and
-    // describe nothing but itself.
+    // Pinned to a versioned prefix on purpose. The shipped default is unversioned
+    // and so could never be nominated whether the guard exists or not; under
+    // v1/api-waypoint the seven registered routes would propose v1/*, and waypoint
+    // would describe nothing but itself.
+    $this->withWaypointConfig(['api-waypoint.prefix' => 'v1/api-waypoint']);
+
     expect(patterns(detector()->candidates()))->not->toContain('v1/*');
+});
+
+it('does not nominate its own unversioned default either', function (): void {
+    expect(patterns(detector()->candidates()))->not->toContain('_api-waypoint/*');
 });
 
 it('ignores framework and tooling prefixes', function (): void {
@@ -98,8 +105,11 @@ it('counts what a set of patterns would collect', function (): void {
 });
 
 it('excludes the package own routes from the match count', function (): void {
-    // v1/* would otherwise sweep up v1/api-waypoint and report a count the
-    // compiler will never produce.
+    // Same pinned prefix, for the count rather than the proposal: v1/* would
+    // otherwise sweep up the package's own seven routes and report a number that
+    // counts waypoint describing itself.
+    $this->withWaypointConfig(['api-waypoint.prefix' => 'v1/api-waypoint']);
+
     expect(detector()->matches(['v1/*']))->toBe(0);
 });
 

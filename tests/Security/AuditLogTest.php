@@ -34,7 +34,7 @@ function captureAuditLog(): ArrayObject
 it('writes one line per request, with the route and the status', function (): void {
     $captured = captureAuditLog();
 
-    $this->withHeaders($this->secretHeader())->getJson('/v1/api-waypoint')->assertOk();
+    $this->withHeaders($this->secretHeader())->getJson('/_api-waypoint')->assertOk();
 
     expect($captured->count())->toBe(1)
         ->and($captured[0][0])->toBe('api-waypoint')
@@ -48,7 +48,7 @@ it('writes one line per request, with the route and the status', function (): vo
 it('identifies the actor by a fingerprint, never by the secret itself', function (): void {
     $captured = captureAuditLog();
 
-    $this->withHeaders($this->secretHeader())->getJson('/v1/api-waypoint')->assertOk();
+    $this->withHeaders($this->secretHeader())->getJson('/_api-waypoint')->assertOk();
 
     $actor = $captured[0][1]['actor'];
 
@@ -61,7 +61,7 @@ it('records the scenario name on a scenario run', function (): void {
     $captured = captureAuditLog();
 
     $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/scenarios', ['scenario' => 'paid_order'])
+        ->postJson('/_api-waypoint/scenarios', ['scenario' => 'paid_order'])
         ->assertCreated();
 
     expect($captured[0][1]['scenario'])->toBe('paid_order');
@@ -71,7 +71,7 @@ it('records the role on a token mint', function (): void {
     $captured = captureAuditLog();
 
     $this->withHeaders($this->secretHeader())
-        ->postJson('/v1/api-waypoint/tokens', ['role' => 'admin'])
+        ->postJson('/_api-waypoint/tokens', ['role' => 'admin'])
         ->assertOk();
 
     expect($captured[0][1]['role'])->toBe('admin');
@@ -81,7 +81,7 @@ it('records the table and column on a reference lookup', function (): void {
     $captured = captureAuditLog();
 
     $this->withHeaders($this->secretHeader())
-        ->getJson('/v1/api-waypoint/references/customers/uuid')
+        ->getJson('/_api-waypoint/references/customers/uuid')
         ->assertOk();
 
     expect($captured[0][1])->toMatchArray(['table' => 'customers', 'column' => 'uuid']);
@@ -91,7 +91,7 @@ it('writes no line for a request the secret guard rejected', function (): void {
     $captured = captureAuditLog();
 
     // The guard runs first, so a probe cannot fill the log with noise.
-    $this->withHeaders($this->secretHeader('wrong'))->getJson('/v1/api-waypoint')->assertNotFound();
+    $this->withHeaders($this->secretHeader('wrong'))->getJson('/_api-waypoint')->assertNotFound();
 
     expect($captured->count())->toBe(0);
 });
