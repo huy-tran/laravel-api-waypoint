@@ -15,6 +15,12 @@ new format version, not merely a new package major.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-08-21
+
+Corrects the shipped Boost skill. Nothing in the compiler, the HTTP surface or the
+MCP tools changed. Worth taking if you ran `boost:install` against 0.2.0: rerun it
+to recompose the agent files. 453 tests.
+
 ### Fixed
 
 - The skill shipped three `{{ $assist->artisanCommand(...) }}` calls inside
@@ -99,6 +105,7 @@ section in this file, and does not already have a tag. It then runs the full che
 suite, creates the annotated `vx.y.z` tag, and opens a GitHub Release using that
 section as the notes. Packagist picks the tag up from there.
 
-[Unreleased]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/huy-tran/laravel-api-waypoint/releases/tag/v0.1.0
