@@ -16,6 +16,7 @@
     },
     "require-dev": {
         "larastan/larastan": "^3.0",
+        "laravel/mcp": "^0.7.1 || ^0.8.0 || ^0.9.0",
         "laravel/pint": "^1.18",
         "laravel/sanctum": "^4.0",
         "lorisleiva/laravel-actions": "^2.7",
@@ -27,6 +28,8 @@
         "spatie/laravel-query-builder": "^6.0 || ^7.0"
     },
     "suggest": {
+        "laravel/boost": "Surfaces the waypoint MCP tools to AI agents, and installs the shipped guideline and skill (^1.6 || ^2.0).",
+        "laravel/mcp": "Required for the waypoint MCP tools (^0.7.1 || ^0.8.0 || ^0.9.0).",
         "lorisleiva/laravel-actions": "Required to introspect Action classes (^2.7).",
         "nwidart/laravel-modules": "Enables module attribution for endpoints (^11.0 || ^12.0).",
         "spatie/laravel-query-builder": "Enables filter/sort/include descriptions (^6.0 || ^7.0).",

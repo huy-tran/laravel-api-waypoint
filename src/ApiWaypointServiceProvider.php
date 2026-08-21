@@ -16,10 +16,14 @@ use Hygo\ApiWaypoint\Console\InstallCommand;
 use Hygo\ApiWaypoint\Console\SchemaCommand;
 use Hygo\ApiWaypoint\Console\SnapshotCommand;
 use Hygo\ApiWaypoint\Exceptions\UnsafeConfigurationException;
+use Hygo\ApiWaypoint\Mcp\Tools\WaypointCheckTool;
+use Hygo\ApiWaypoint\Mcp\Tools\WaypointEndpointsTool;
+use Hygo\ApiWaypoint\Mcp\Tools\WaypointEndpointTool;
 use Hygo\ApiWaypoint\Support\ReferenceWhitelist;
 use Hygo\ApiWaypoint\Support\ScenarioRegistry;
 use Hygo\ApiWaypoint\Support\SchemaRepository;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Mcp\Server\Tool;
 
 class ApiWaypointServiceProvider extends ServiceProvider
 {
@@ -39,6 +43,11 @@ class ApiWaypointServiceProvider extends ServiceProvider
             $this->commands([SchemaCommand::class, CheckCommand::class, SnapshotCommand::class, InstallCommand::class]);
         }
 
+        // Before the registration gate below, deliberately: the tools read the
+        // compiler, not the HTTP surface, and are useful in a checkout where the
+        // surface is off.
+        $this->registerMcpTools();
+
         $this->guardAgainstUnsafeConfiguration();
 
         if (! $this->waypointShouldRegister()) {
@@ -47,6 +56,30 @@ class ApiWaypointServiceProvider extends ServiceProvider
 
         $this->loadRoutesFrom(__DIR__.'/../routes/api-waypoint.php');
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+    }
+
+    /**
+     * Offer the read-only tools to Laravel Boost's MCP server.
+     *
+     * Boost merges boost.mcp.tools.include into both the tool list it serves and the
+     * allow-list its executor checks, so appending here is the whole integration.
+     * Guarded on laravel/mcp because the tool classes extend its Tool: without it,
+     * naming them at all would be a fatal error rather than a missing feature.
+     */
+    protected function registerMcpTools(): void
+    {
+        if (! class_exists(Tool::class)) {
+            return;
+        }
+
+        config()->set('boost.mcp.tools.include', array_values(array_unique(array_merge(
+            (array) config('boost.mcp.tools.include', []),
+            [
+                WaypointCheckTool::class,
+                WaypointEndpointTool::class,
+                WaypointEndpointsTool::class,
+            ],
+        ))));
     }
 
     /**

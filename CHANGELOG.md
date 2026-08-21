@@ -24,6 +24,19 @@ new format version, not merely a new package major.
   production, never overwrites a secret that is already set, and reports a
   customised `routes.include` rather than overwriting it. `--include=`,
   `--secret=`, `--skip-env` and `--force` override the individual steps.
+- Laravel Boost integration. `resources/boost/guidelines/core.blade.php` and the
+  `api-waypoint` skill under `resources/boost/skills/` are discovered by
+  `boost:install` and composed into whichever agent files a project uses. The
+  skill covers setup, the HTTP surface, the 404 ambiguity and its `route:list`
+  remedy, the four unmapped reasons, query contracts and the attributes.
+- Three read-only MCP tools, surfaced through Boost's server by appending to
+  `boost.mcp.tools.include`: `waypoint-check` (gaps and warnings, each with a
+  remedy), `waypoint-endpoints` (the index, filterable by module, substring or
+  unmapped) and `waypoint-endpoint` (one endpoint with every referenced Data
+  class resolved transitively). They read the compiler rather than the HTTP
+  surface, so they need neither the secret nor `enabled`, and they recompile per
+  call so they cannot answer from before an agent's edit. Guarded on
+  `laravel/mcp` being installed.
 
 ## [0.1.0] - 2026-08-20
 

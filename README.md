@@ -260,6 +260,35 @@ The second is the "collection cannot go stale" enforcement: a PR that changes an
 
 ---
 
+## AI agents, via Laravel Boost
+
+Install [Laravel Boost](https://github.com/laravel/boost) alongside this package and `boost:install` picks up a guideline and a skill shipped here, composing them into whichever agent files your project uses (Claude Code, Cursor, Copilot, Codex, and the rest). Authored once, rather than per agent.
+
+```bash
+composer require --dev laravel/boost
+php artisan boost:install
+```
+
+The guideline is short and always in context: the document is the source of truth for endpoint shape, run `waypoint:check` after touching a route or a Data class, and never enable this outside local. The `api-waypoint` skill carries the detail an agent otherwise gets wrong: that `routes.include` has to match the real prefix, that the document is served at the prefix root and `{prefix}/schema` is a 404, that a 404 cannot distinguish an unregistered surface from a bad secret and `route:list` is how you tell, and what to do about each of the four unmapped reasons.
+
+Both live under `resources/boost/`, which is where Boost globs a third-party package for them. You can exclude either from the composed output with `boost.guidelines.exclude` or `boost.skills.exclude`.
+
+### MCP tools
+
+With Boost installed, three read-only tools are added to its MCP server:
+
+| Tool | Returns |
+|---|---|
+| `waypoint-check` | Unmapped routes with a remedy each, warnings grouped by code, the document hash. Optional `reason` filter, `warnings: false`. |
+| `waypoint-endpoints` | One line per endpoint: id, method, URI, module, auth, input component, whether it has a query contract. Filter by `module`, `search`, `unmapped_only`. |
+| `waypoint-endpoint` | One endpoint in full, with every referenced Data class resolved transitively, its error responses, and any warning about it. Takes `id`. |
+
+They read the compiler, not the HTTP surface, so they need neither the shared secret nor `enabled` and work in a checkout where waypoint was never switched on. Each recompiles on call rather than reusing the memoised document: an agent asking is usually an agent that just changed something, and answering from before its edit would be confidently wrong.
+
+Registration appends to `boost.mcp.tools.include`, which Boost merges into both the tool list it serves and the allow-list its executor checks. It is guarded on `laravel/mcp` being installed, so an application without Boost is unaffected.
+
+---
+
 ## Response snapshots
 
 The compiler will not derive a response body schema from a Fractal transformer: `transform()` is arbitrary PHP, and a guessed shape is worse than an honest `"shape": "opaque"`. Instead, record a real one.
