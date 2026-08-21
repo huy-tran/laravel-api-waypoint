@@ -12,6 +12,7 @@ use Hygo\ApiWaypoint\Compiler\Input\Resolvers\NullInputResolver;
 use Hygo\ApiWaypoint\Compiler\Response\SnapshotStore;
 use Hygo\ApiWaypoint\Compiler\SchemaCompiler;
 use Hygo\ApiWaypoint\Console\CheckCommand;
+use Hygo\ApiWaypoint\Console\HandshakeCommand;
 use Hygo\ApiWaypoint\Console\InstallCommand;
 use Hygo\ApiWaypoint\Console\SchemaCommand;
 use Hygo\ApiWaypoint\Console\SnapshotCommand;
@@ -40,7 +41,13 @@ class ApiWaypointServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             // Always registered: CI runs waypoint:check with the HTTP surface off.
-            $this->commands([SchemaCommand::class, CheckCommand::class, SnapshotCommand::class, InstallCommand::class]);
+            $this->commands([
+                SchemaCommand::class,
+                CheckCommand::class,
+                SnapshotCommand::class,
+                InstallCommand::class,
+                HandshakeCommand::class,
+            ]);
         }
 
         // Before the registration gate below, deliberately: the tools read the

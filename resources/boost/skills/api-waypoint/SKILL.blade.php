@@ -20,6 +20,7 @@ A development-only package that compiles a machine-readable description of every
 | `{{ $assist->artisanCommand('waypoint:check') }}` | Report gaps, warnings and drift. `--fail-on-unmapped`, `--fail-on-warning`, `--baseline=path` |
 | `{{ $assist->artisanCommand('waypoint:schema') }}` | Write the document. `--output=path`, `--pretty`, `--clear` |
 | `{{ $assist->artisanCommand('waypoint:snapshot') }}` | `--list` stored response snapshots, `--prune` to delete them |
+| `{{ $assist->artisanCommand('waypoint:handshake') }}` | Connection details for a local companion app: URL, header, secret, paths. `--json`. Exits non-zero and names the unmet condition when the surface is not registered |
 
 The compiler is never gated on `enabled`: only route registration is. `waypoint:check` therefore works in CI, and in any checkout, with the HTTP surface switched off. Never enable the surface to run a check.
 
@@ -85,9 +86,11 @@ Registration is conditional, not protected. Routes exist only when **all three**
 A secret mismatch returns 404, never 403, with Laravel's own `{"message": "Not Found."}`, so a probe cannot discover that anything is there. The cost is that an unregistered surface and a wrong secret look identical. Do not guess between them: ask the route table, which involves neither the secret nor HTTP.
 
 @boostsnippet("Telling the two apart", "shell")
-php artisan route:list --path=api-waypoint
-# 7 routes listed  -> registered; a 404 means the secret did not match
-# no routes listed -> one of the three registration conditions is unmet
+php artisan waypoint:handshake
+# registered            -> a 404 means the secret did not match
+# not registered (...)  -> names which of the three conditions is unmet
+
+php artisan route:list --path=api-waypoint   # the same answer, one level lower
 @endboostsnippet
 
 When checking over HTTP, keep a known-good control URL in the comparison so "app unreachable" is distinguishable from "guard said no".

@@ -245,6 +245,7 @@ public ?string $reference = null;
 | Command | Behaviour |
 |---|---|
 | `waypoint:install` | Publish the config, detect the API route prefix, write the local env keys. `--include=`, `--secret=`, `--skip-env`, `--force`. |
+| `waypoint:handshake` | Print the connection details a local companion app needs: URL, header, secret, paths. `--json`. Exits non-zero when the surface is not registered, naming which condition is unmet. |
 | `waypoint:schema` | Compile and write the document. `--output=path` (default stdout), `--pretty`, `--clear` to bust the cache. |
 | `waypoint:check` | Compile and report gaps and warnings. `--fail-on-unmapped`, `--fail-on-warning`, `--baseline=path`. |
 | `waypoint:snapshot` | `--list` shows stored response snapshots and their age, `--prune` deletes them. |
@@ -257,6 +258,46 @@ public ?string $reference = null;
 ```
 
 The second is the "collection cannot go stale" enforcement: a PR that changes an endpoint must regenerate the committed baseline, and the diff shows exactly which endpoints and DTOs moved.
+
+---
+
+## Connecting a local companion app
+
+Every route needs the shared secret, including the two read-only ones, and that is not going to be relaxed. The document is a precise map of the application - table and column names from every `exists:` rule, action classes, roles and abilities, and the URL of the token-minting endpoint - and the same secret is what keeps `POST /tokens` and `POST /scenarios` out of reach of any web page your browser happens to load. A custom request header cannot be sent cross-origin without clearing a CORS preflight, so requiring one is also what stops a hostile site from reaching `your-app.test` while you are logged into it.
+
+None of that requires you to copy a secret by hand, because a local companion app is *local*: it can read the secret out of the project directory instead.
+
+```bash
+php artisan waypoint:handshake          # human-readable
+php artisan waypoint:handshake --json   # for the companion app to consume
+```
+
+```json
+{
+  "waypoint": { "schema_format_version": "1.0", "package_version": "0.4.0" },
+  "application": { "name": "Acme Orders API", "environment": "local" },
+  "registered": true,
+  "unregistered_reason": null,
+  "connection": {
+    "base_url": "http://acme-orders.test/_api-waypoint",
+    "header": "X-Api-Waypoint-Secret",
+    "secret": "7f3c9a1e…"
+  },
+  "paths": {
+    "schema": "/_api-waypoint",
+    "manifest": "/_api-waypoint/manifest",
+    "references": "/_api-waypoint/references/{table}/{column}",
+    "scenarios": "/_api-waypoint/scenarios",
+    "tokens": "/_api-waypoint/tokens"
+  }
+}
+```
+
+Being able to run that command in a checkout is a stronger claim to be the local dev tool than any credential presented over HTTP. Paths are published rather than assumed, so a companion app hardcodes none of them and keeps working when `prefix` changes.
+
+It also answers the question the HTTP surface deliberately cannot. A 404 there is identical for an unregistered surface and a wrong secret; this reports `registered: false` with `unregistered_reason` of `disabled`, `environment_not_permitted`, `no_secret` or `not_loaded`, and exits non-zero, so a companion app can say which of the three conditions to fix rather than "connection failed".
+
+It refuses to run in production, and never prints a secret there.
 
 ---
 

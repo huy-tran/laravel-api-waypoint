@@ -15,6 +15,29 @@ new format version, not merely a new package major.
 
 ## [Unreleased]
 
+### Added
+
+- `waypoint:handshake`: prints what a local companion app needs to connect - base
+  URL, header name, secret, and every path, so the consumer hardcodes none of
+  them. `--json` for machine consumption.
+
+  This is the answer to "why does reading the schema need a secret at all". The
+  secret stays mandatory on every route: the document maps table and column names,
+  action classes, roles, abilities and the URL of the token-minting endpoint, and
+  requiring a custom header is also what stops a page your browser loaded from
+  reaching the surface, since it cannot send one cross-origin without clearing a
+  CORS preflight. What was actually costing something was the copy-paste, and a
+  companion app that runs on the same machine can read the secret from the project
+  directory instead. Being able to run the command in a checkout is a stronger
+  claim to be the local dev tool than any credential presented over HTTP.
+
+  It also reports what the HTTP surface deliberately cannot. A 404 is identical
+  for an unregistered surface and a wrong secret; the payload carries
+  `registered` plus an `unregistered_reason` of `disabled`,
+  `environment_not_permitted`, `no_secret` or `not_loaded`, and the command exits
+  non-zero, so a consumer can name the condition to fix. Refuses to run in
+  production, and prints no secret there.
+
 ### Removed
 
 - `api-waypoint-contract.md` and `specs.md`. Both had drifted into being wrong:
