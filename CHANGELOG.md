@@ -15,6 +15,12 @@ new format version, not merely a new package major.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-21
+
+Connecting a local companion app without copying a secret by hand, and one fewer
+place for the wire format to be described wrongly. No change to the HTTP surface,
+the compiler or the wire format, which stays at `1.0`. 465 tests.
+
 ### Added
 
 - `waypoint:handshake`: prints what a local companion app needs to connect - base
@@ -169,7 +175,8 @@ section in this file, and does not already have a tag. It then runs the full che
 suite, creates the annotated `vx.y.z` tag, and opens a GitHub Release using that
 section as the notes. Packagist picks the tag up from there.
 
-[Unreleased]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.1.0...v0.2.0
