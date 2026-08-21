@@ -15,6 +15,13 @@ new format version, not merely a new package major.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-21
+
+Moves the dev-only HTTP surface out of the host application's API version
+namespace. Minor rather than patch: the default path changes, though only for an
+application that had not published the config. The wire format is unchanged at
+`1.0` and no contract, command or attribute moved. 455 tests.
+
 ### Changed
 
 - The default route prefix is now `_api-waypoint`, was `v1/api-waypoint`. A version
@@ -127,7 +134,8 @@ section in this file, and does not already have a tag. It then runs the full che
 suite, creates the annotated `vx.y.z` tag, and opens a GitHub Release using that
 section as the notes. Packagist picks the tag up from there.
 
-[Unreleased]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/huy-tran/laravel-api-waypoint/releases/tag/v0.1.0
