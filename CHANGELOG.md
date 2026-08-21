@@ -15,6 +15,12 @@ new format version, not merely a new package major.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-21
+
+Adoption and agent support. The wire format is unchanged at `1.0`, and nothing in
+the compiler or the HTTP surface changed, so upgrading from 0.1.0 is a
+`composer update` and nothing else. 451 tests.
+
 ### Added
 
 - `waypoint:install`: publishes the config, detects which URI prefix the host
@@ -80,5 +86,6 @@ section in this file, and does not already have a tag. It then runs the full che
 suite, creates the annotated `vx.y.z` tag, and opens a GitHub Release using that
 section as the notes. Packagist picks the tag up from there.
 
-[Unreleased]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/huy-tran/laravel-api-waypoint/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/huy-tran/laravel-api-waypoint/releases/tag/v0.1.0
