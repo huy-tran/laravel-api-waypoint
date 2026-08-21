@@ -15,6 +15,16 @@ new format version, not merely a new package major.
 
 ## [Unreleased]
 
+### Added
+
+- `waypoint:install`: publishes the config, detects which URI prefix the host
+  application registers its API under and writes `routes.include` to match, then
+  adds `API_WAYPOINT_ENABLED` and a generated `API_WAYPOINT_SECRET` to `.env`,
+  documenting both in `.env.example` disabled and blank. Refuses to run in
+  production, never overwrites a secret that is already set, and reports a
+  customised `routes.include` rather than overwriting it. `--include=`,
+  `--secret=`, `--skip-env` and `--force` override the individual steps.
+
 ## [0.1.0] - 2026-08-20
 
 First release. The compiler and the full HTTP surface are complete and covered by

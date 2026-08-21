@@ -37,6 +37,14 @@ Laravel 11 is not supported. Its security-fix window closed in March 2026, every
 
 ```bash
 composer require --dev hygo/laravel-api-waypoint
+php artisan waypoint:install
+```
+
+`waypoint:install` publishes the config, works out which URI prefix your application actually registers its API under and writes `routes.include` to match, then adds the two environment keys with a generated secret. It refuses to run in production, never overwrites a secret that is already set, and reports a customised `routes.include` rather than clobbering it. `--include=`, `--secret=`, `--skip-env` and `--force` override the individual steps.
+
+By hand instead:
+
+```bash
 php artisan vendor:publish --tag=api-waypoint-config
 php artisan vendor:publish --tag=api-waypoint-migrations   # only if you use scenarios
 ```
@@ -47,6 +55,8 @@ Then set **two** environment variables, in your local `.env` only:
 API_WAYPOINT_ENABLED=true
 API_WAYPOINT_SECRET=  # php -r "echo bin2hex(random_bytes(32));"
 ```
+
+And set `routes.include` to the prefix your endpoints are actually registered under. The default is `api/*`, which is right for an application routing through `routes/api.php` and matches **nothing** in one that registers `v1/orders` from a per-module route file. The symptom is a document with zero endpoints, which reads as a broken package rather than as one wrong config line.
 
 Check it:
 
@@ -234,6 +244,7 @@ public ?string $reference = null;
 
 | Command | Behaviour |
 |---|---|
+| `waypoint:install` | Publish the config, detect the API route prefix, write the local env keys. `--include=`, `--secret=`, `--skip-env`, `--force`. |
 | `waypoint:schema` | Compile and write the document. `--output=path` (default stdout), `--pretty`, `--clear` to bust the cache. |
 | `waypoint:check` | Compile and report gaps and warnings. `--fail-on-unmapped`, `--fail-on-warning`, `--baseline=path`. |
 | `waypoint:snapshot` | `--list` shows stored response snapshots and their age, `--prune` deletes them. |
