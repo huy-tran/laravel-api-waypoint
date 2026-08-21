@@ -15,6 +15,18 @@ new format version, not merely a new package major.
 
 ## [Unreleased]
 
+### Removed
+
+- `api-waypoint-contract.md` and `specs.md`. Both had drifted into being wrong:
+  the spec still said "ready to build", still listed Laravel 11 as supported after
+  it was dropped, and still gave "no MCP server" as a non-goal two releases after
+  the MCP tools shipped; the contract named an Artisan command, `api:schema`, that
+  has never existed. `resources/schema/api-waypoint-1.0.json` is now the only
+  statement of the wire format, and the conformance test validates the compiled
+  document against it, so it cannot go stale without something failing. Both files
+  remain in git history. The contract was the one of the two that shipped in the
+  dist archive, so the published package loses it and gains nothing else.
+
 ## [0.3.0] - 2026-08-21
 
 Moves the dev-only HTTP surface out of the host application's API version

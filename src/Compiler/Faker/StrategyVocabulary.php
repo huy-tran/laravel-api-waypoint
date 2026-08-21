@@ -19,7 +19,7 @@ final class StrategyVocabulary
     public const VERSION = '1.0';
 
     /**
-     * Declared by api-waypoint-contract.md.
+     * Declared by resources/schema/api-waypoint-1.0.json.
      *
      * @var array<int, string>
      */

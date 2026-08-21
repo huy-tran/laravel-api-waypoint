@@ -12,7 +12,9 @@ use JsonSerializable;
  * Both GET / and GET /manifest are built from this object, never from a separate
  * cheaper path, so the two can never disagree.
  *
- * Field names here are normative and come from api-waypoint-contract.md.
+ * Field names here are normative and come from
+ * resources/schema/api-waypoint-1.0.json, which the conformance test validates
+ * the compiled document against.
  */
 class SchemaDocument implements JsonSerializable
 {

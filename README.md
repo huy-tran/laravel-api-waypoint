@@ -125,7 +125,7 @@ Field schemas are JSON Schema draft 2020-12 plus two extension namespaces:
 - **`x-laravel`** — the Laravel facts JSON Schema cannot express: `exists:`, `unique:`, conditional rules, the enum class, the PHP property name.
 - **`x-faker`** — an abstract generation *strategy*. This package never names a generator library method; the Central App maps a strategy to whatever it generates with. That is what lets the two codebases be built independently.
 
-The wire format is normative in `api-waypoint-contract.md`, and machine-checkable against `resources/schema/api-waypoint-1.0.json`. Both this package and the Central App test against that meta-schema.
+The wire format is normative in `resources/schema/api-waypoint-1.0.json`, a meta-schema both this package and the Central App test against. One authority, and it is machine-checkable: a prose copy alongside it drifts silently, because nothing fails when it is wrong.
 
 ---
 
